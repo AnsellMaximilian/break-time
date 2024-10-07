@@ -18,7 +18,6 @@ export const UserContextProvider: React.FC<{ children: ReactNode }> = ({
     try {
       setIsLoading(true);
       const user = await account.get();
-      console.log({ user });
       const userProfile: UserProfile = await databases.getDocument(
         config.dbId,
         config.userProfileCollectionId,
@@ -26,7 +25,6 @@ export const UserContextProvider: React.FC<{ children: ReactNode }> = ({
       );
       setCurrentUser({ ...user, profile: userProfile });
     } catch (error) {
-      console.log({ error });
       setCurrentUser(null);
     } finally {
       setIsLoading(false);

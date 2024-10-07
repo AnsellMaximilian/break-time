@@ -75,7 +75,6 @@ function RegisterPage() {
         ExecutionMethod.POST
       );
 
-      console.log(res);
       if (!res.errors) {
         router.push("/app/profile");
       } else {
@@ -86,7 +85,6 @@ function RegisterPage() {
         });
       }
     } catch (error) {
-      console.log(error);
     } finally {
       setIsLoading(false);
     }

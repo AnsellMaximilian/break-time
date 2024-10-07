@@ -26,3 +26,14 @@ export type RemoteData<T> = {
 export type RemoteDataWithSetter<T> = RemoteData<T> & {
   setData: Dispatch<SetStateAction<RemoteData<T>>>;
 };
+
+export type Pinata = Models.Document & {
+  title: string;
+  description?: string;
+  contributeStart?: string;
+  contributeEnd?: string;
+  minimumOpenTime?: string;
+  allowedContributorIds: string[];
+
+  thumbnailCid?: string;
+};
