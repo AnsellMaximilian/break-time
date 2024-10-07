@@ -1,6 +1,5 @@
 "use client";
 
-import { UserContextProvider } from "@/contexts/user/UserContextProvider";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import privateRoute from "@/hooks/privateRoute";
 

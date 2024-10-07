@@ -1,6 +1,6 @@
 import { Client, Databases, Permission, Role, Account, ID  } from 'node-appwrite';
 
-export default async ({ req, res }) => {
+export default async ({ req, res, log }) => {
   const client = new Client()
      .setEndpoint('https://cloud.appwrite.io/v1')
      .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
@@ -11,7 +11,7 @@ export default async ({ req, res }) => {
 
   if(req.method === "POST"){
     try {
-      const {username, email, password } = JSON.parse(req.body);
+      const {name, username, email, password } = JSON.parse(req.body);
 
       const id = ID.unique();
   
@@ -22,12 +22,14 @@ export default async ({ req, res }) => {
           process.env.USER_PROFILE_COLLECTION_ID,
           createdUser.$id,
           {
-            username
+            username,
+            name
           },
           [
             Permission.read(Role.any()), Permission.update(Role.user(createdUser.$id))
           ]
       )
+
   
       return res.json({
         success: true,

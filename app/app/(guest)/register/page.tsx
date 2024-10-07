@@ -34,6 +34,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
+  name: z.string().min(2).max(100),
   username: z.string().min(2).max(50),
   email: z.string().email(),
   password: z.string(),
@@ -46,6 +47,7 @@ function RegisterPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       username: "",
       password: "",
       email: "",
@@ -54,9 +56,10 @@ function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const { username, email, password } = values;
+      const { name, username, email, password } = values;
 
       const body = {
+        name,
         username,
         email,
         password,
@@ -105,6 +108,19 @@ function RegisterPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="username"
