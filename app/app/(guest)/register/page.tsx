@@ -74,7 +74,7 @@ function RegisterPage() {
 
       console.log(res);
       if (!res.errors) {
-        router.push("/app/dashboard");
+        router.push("/app/profile");
       } else {
         toast({
           title: "Registration Failed",
@@ -83,6 +83,7 @@ function RegisterPage() {
         });
       }
     } catch (error) {
+      console.log(error);
     } finally {
       setIsLoading(false);
     }

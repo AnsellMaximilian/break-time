@@ -2,9 +2,7 @@
 
 import { UserContextProvider } from "@/contexts/user/UserContextProvider";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import Sidebar from "@/components/Sidebar";
 import privateRoute from "@/hooks/privateRoute";
-import { DataContextProvider } from "@/contexts/data/DataContextProvider";
 
 function AppLayout({
   children,
@@ -12,14 +10,11 @@ function AppLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <DataContextProvider>
-      <div className="h-screen flex overflow-hidden">
-        <Sidebar />
-        <div className="grow h-full">
-          <ScrollArea className="h-full overflow-y-auto">{children}</ScrollArea>
-        </div>
+    <div className="h-screen flex overflow-hidden">
+      <div className="grow h-full">
+        <ScrollArea className="h-full overflow-y-auto">{children}</ScrollArea>
       </div>
-    </DataContextProvider>
+    </div>
   );
 }
 

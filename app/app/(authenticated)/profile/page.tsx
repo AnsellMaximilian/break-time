@@ -24,11 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { languages } from "@/const";
 import { useUser } from "@/contexts/user/UserContext";
 import { config, databases } from "@/lib/appwrite";
-import { UserProfile } from "@/type";
-import { useToast } from "@/components/ui/use-toast";
+import { UserProfile } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -36,9 +35,6 @@ const formSchema = z.object({
   }),
   name: z.string().min(2, {
     message: "name must be at least 2 characters.",
-  }),
-  language: z.string({
-    required_error: "Please select a language",
   }),
   bio: z.string().max(160, {
     message: "Bio must not be longer than 30 characters.",
@@ -56,9 +52,6 @@ export default function Page() {
     defaultValues: {
       username: "",
       name: "",
-      language: currentUser?.profile?.currentLanguage
-        ? currentUser.profile.currentLanguage
-        : languages[0].locale,
       bio: "",
     },
   });
@@ -74,7 +67,6 @@ export default function Page() {
           {
             username: values.username,
             name: values.name,
-            currentLanguage: values.language,
             bio: values.bio,
           }
         )) as UserProfile;
@@ -88,10 +80,6 @@ export default function Page() {
         form.setValue("username", currentUser.profile.username);
         form.setValue("name", currentUser.profile.name || "");
         form.setValue("bio", currentUser.profile.bio || "");
-        form.setValue(
-          "language",
-          currentUser.profile.currentLanguage || languages[0].locale
-        );
         toast({
           variant: "destructive",
           title: "Failed to update profile.",
@@ -107,10 +95,6 @@ export default function Page() {
       form.setValue("username", currentUser.profile.username);
       form.setValue("name", currentUser.profile.name || "");
       form.setValue("bio", currentUser.profile.bio || "");
-      form.setValue(
-        "language",
-        currentUser.profile.currentLanguage || languages[0].locale
-      );
     }
   }, [currentUser?.profile, form]);
   return (
@@ -148,40 +132,6 @@ export default function Page() {
                     <Input placeholder="Your name" {...field} />
                   </FormControl>
                   <FormDescription>This is your name.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="language"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Language</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {languages.map((l) => (
-                        <SelectItem key={l.locale} value={l.locale}>
-                          <div className="flex gap-2 items-center">
-                            <l.flag className="w-6" />
-                            <span>{l.readableName}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    This will be your default language every time you open
-                    Banter Bot. You can change this anytime.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
