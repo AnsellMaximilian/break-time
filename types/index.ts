@@ -12,6 +12,7 @@ export type UserProfile = Models.Document & {
   name?: string;
   bio?: string;
   birthDate?: string;
+  friendIds: string[];
 };
 
 export type User = Models.User<Models.Preferences> & {
