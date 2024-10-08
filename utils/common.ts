@@ -55,3 +55,14 @@ export function timeSince(now: string): string {
 
   return formatDistanceToNow(nowDate, { addSuffix: true });
 }
+
+export function checkFileType(
+  file: File,
+  allowedFileTypes: string[] = ["png", "jpeg", "jpeg"]
+) {
+  if (file?.name) {
+    const fileType = file.name.split(".").pop();
+    if (fileType && allowedFileTypes.includes(fileType)) return true;
+  }
+  return false;
+}
