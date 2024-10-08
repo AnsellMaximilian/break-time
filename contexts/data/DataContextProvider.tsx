@@ -50,7 +50,7 @@ export const DataContextProvider: React.FC<{ children: ReactNode }> = ({
         const resUserProfs = await databases.listDocuments(
           config.dbId,
           config.userProfileCollectionId,
-          [Query.equal("$id", currentUser.profile.friendIds)]
+          [Query.equal("$id", currentUser.profile.friendIds), Query.limit(100)]
         );
 
         const friends = resUserProfs.documents as UserProfile[];

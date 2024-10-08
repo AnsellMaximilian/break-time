@@ -18,16 +18,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import breakTimeSquare from "@/assets/break-time-square.png";
+import { UserProfile } from "@/types";
+import { useUser } from "@/contexts/user/UserContext";
 
 const formSchema = z.object({
   title: z.string().min(2).max(100),
   description: z.string().max(500),
-  // contributeStart: z.date(),
-  // contributeEnd: z.date(),
-  //   minimumOpenTime: z.date(),
 });
 
 export default function CreatePinataPage() {
+  const { currentUser } = useUser();
+
   const [isLoading, setisLoading] = useState(false);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreviewURL, setThumbnailPreviewURL] = useState<string | null>(
@@ -38,6 +39,11 @@ export default function CreatePinataPage() {
   const [contributeEnd, setContributeEnd] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // FRIENDS
+  const [friends, setFriends] = useState<UserProfile[]>([]);
+  const [friendsHasNext, setFriendsHasNext] = useState(true);
+  const [friendsHasPrev, setFriendsHasPrev] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

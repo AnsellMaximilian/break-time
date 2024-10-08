@@ -7,10 +7,13 @@ import Link from "next/link";
 import React, { useState } from "react";
 import AddFriendForm from "./AddFriendForm";
 import { useData } from "@/contexts/data/DataContext";
+import FriendList from "./FriendList";
+import { UserProfile } from "@/types";
 
 export default function DashboardPage() {
   const { currentUser } = useUser();
-  const { friends } = useData();
+
+  const [friends, setFriends] = useState<UserProfile[]>([]);
 
   return (
     <div>
@@ -37,25 +40,7 @@ export default function DashboardPage() {
               )
             </span>
           </header>
-          <div className="">
-            {currentUser?.profile &&
-            currentUser.profile.friendIds.length > 0 ? (
-              <ul className="flex flex-col gap-2">
-                {friends.data.map((f) => (
-                  <li
-                    key={f.id}
-                    className="p-2 rounded-md border border-border"
-                  >
-                    {f.name}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-muted-foreground text-sm text-center">
-                Add friends by their usernames
-              </div>
-            )}
-          </div>
+          <FriendList friends={friends} setFriends={setFriends} />
           <AddFriendForm />
         </section>
       </div>

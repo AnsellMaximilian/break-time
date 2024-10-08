@@ -78,6 +78,7 @@ export default function AddFriendForm() {
       setCurrentUser((prev) => (prev ? { ...prev, profile: userProf } : null));
 
       toast({ title: "Add friend successful" });
+      setusername("");
     }
   };
   return (
