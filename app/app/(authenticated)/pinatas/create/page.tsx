@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,8 +18,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import breakTimeSquare from "@/assets/break-time-square.png";
-import { UserProfile } from "@/types";
+import { Pinata, UserProfile } from "@/types";
 import { useUser } from "@/contexts/user/UserContext";
+import { config, databases } from "@/lib/appwrite";
+import { ID, Permission, Query, Role } from "appwrite";
+import { Checkbox } from "@/components/ui/checkbox";
+import { truncateString } from "@/utils/common";
+import { pinata } from "@/lib/pinata";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   title: z.string().min(2).max(100),
@@ -28,6 +35,10 @@ const formSchema = z.object({
 
 export default function CreatePinataPage() {
   const { currentUser } = useUser();
+
+  const { toast } = useToast();
+
+  const router = useRouter();
 
   const [isLoading, setisLoading] = useState(false);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
@@ -38,12 +49,69 @@ export default function CreatePinataPage() {
   const [contributeStart, setContributeStart] = useState("");
   const [contributeEnd, setContributeEnd] = useState("");
 
+  const [minimumOpenTime, setMinimumOpenTime] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // FRIENDS
   const [friends, setFriends] = useState<UserProfile[]>([]);
-  const [friendsHasNext, setFriendsHasNext] = useState(true);
-  const [friendsHasPrev, setFriendsHasPrev] = useState(false);
+  const [allowedContributorIds, setAllowedContributorIds] = useState<string[]>(
+    []
+  );
+  const [
+    friendUsernameSearchContributorVal,
+    setFriendUsernameSearchContributorVal,
+  ] = useState("");
+
+  const [filteredContributorFriends, setFilteredContributorFriends] = useState<
+    UserProfile[]
+  >([]);
+
+  const [allowedOpenerIds, setAllowedOpenerIds] = useState<string[]>([]);
+  const [friendUsernameSearchOpenerVal, setFriendUsernameSearcOpenerVal] =
+    useState("");
+
+  const [filteredOpenerFriends, setFilteredOpenerFriends] = useState<
+    UserProfile[]
+  >([]);
+
+  useEffect(() => {
+    if (friendUsernameSearchContributorVal) {
+      setFilteredContributorFriends(
+        friends.filter((f) =>
+          f.username
+            .toLowerCase()
+            .includes(friendUsernameSearchContributorVal.toLowerCase())
+        )
+      );
+    }
+  }, [friendUsernameSearchContributorVal]);
+
+  useEffect(() => {
+    if (friendUsernameSearchOpenerVal) {
+      setFilteredOpenerFriends(
+        friends.filter((f) =>
+          f.username
+            .toLowerCase()
+            .includes(friendUsernameSearchOpenerVal.toLowerCase())
+        )
+      );
+    }
+  }, [friendUsernameSearchOpenerVal]);
+
+  useEffect(() => {
+    (async () => {
+      if (currentUser?.profile) {
+        const friendsRes = await databases.listDocuments(
+          config.dbId,
+          config.userProfileCollectionId,
+          [Query.equal("$id", currentUser.profile.friendIds), Query.limit(100)]
+        );
+        const friends = friendsRes.documents as UserProfile[];
+        setFriends(friends);
+      }
+    })();
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,7 +121,56 @@ export default function CreatePinataPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {}
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!currentUser?.profile) return;
+    try {
+      setisLoading(true);
+
+      let thumbnailCid: string | null = null;
+      if (thumbnail) {
+        const keyRequest = await fetch("/api/key");
+        const keyData = await keyRequest.json();
+        const upload = await pinata.upload.file(thumbnail).key(keyData.JWT);
+        thumbnailCid = upload.cid;
+      }
+
+      const createdPinata = await databases.createDocument(
+        config.dbId,
+        config.pinataCollectionId,
+        ID.unique(),
+        {
+          title: values.title,
+          description: values.description,
+          thumbnailCid: thumbnailCid,
+          contributeStart: contributeStart ?? null,
+          contributeEnd: contributeEnd ?? null,
+          minimumOpenTime: minimumOpenTime ?? null,
+          allowedContributorIds,
+          allowedOpenerIds,
+          userId: currentUser.$id,
+        },
+        [
+          Permission.read(Role.any()),
+          Permission.update(Role.user(currentUser.$id)),
+        ]
+      );
+      toast({
+        title: "Successfully created Pinata",
+        description: "Your Pinata is ready!",
+      });
+      router.push("/app/dashboard");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong.";
+      toast({
+        variant: "destructive",
+        title: "Failed to create Pinata",
+        description: message,
+      });
+    } finally {
+      setisLoading(false);
+    }
+  }
 
   const handleThumbnailChange: React.ChangeEventHandler<HTMLInputElement> = (
     e
@@ -77,7 +194,7 @@ export default function CreatePinataPage() {
       <div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-12 gap-8">
+            <div className="grid grid-cols-12 gap-8 bg-[#FEDE00] p-4 rounded-md">
               <div className="space-y-8 col-span-8">
                 <FormField
                   control={form.control}
@@ -146,8 +263,10 @@ export default function CreatePinataPage() {
               </FormItem>
             </div>
 
-            <div className="col-span-8 bg-[#1CB9D1]">
-              <h2 className="font-semibold mb-4">Contribution Time</h2>
+            <div className="col-span-8 bg-[#1CB9D1] p-4 rounded-md">
+              <h2 className="font-semibold mb-4 text-white">
+                Contribution Time
+              </h2>
               <div className="flex gap-8">
                 <FormField
                   name="contributeStart"
@@ -155,9 +274,14 @@ export default function CreatePinataPage() {
                     <FormItem>
                       <FormLabel>Start</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          onChange={(e) => setContributeStart(e.target.value)}
+                          value={contributeStart}
+                        />
                       </FormControl>
-                      <FormDescription>
+                      <FormDescription className="text-gray-800 text-xs">
                         When can other users and/or yourself start uploading
                         files into the Pinata.
                       </FormDescription>
@@ -171,9 +295,14 @@ export default function CreatePinataPage() {
                     <FormItem>
                       <FormLabel>End</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          onChange={(e) => setContributeEnd(e.target.value)}
+                          value={contributeEnd}
+                        />
                       </FormControl>
-                      <FormDescription>
+                      <FormDescription className="text-gray-800 text-xs">
                         The name of your Pinata, e.g., "Anniversary",
                         "Birthday", "2024 Time Capsule"
                       </FormDescription>
@@ -184,47 +313,142 @@ export default function CreatePinataPage() {
               </div>
             </div>
 
-            <div className="col-span-8 bg-[#D14193]">
-              <h2 className="font-semibold mb-4">Allowed Contributors</h2>
-              <div className="flex gap-8">
+            <div className="col-span-8 bg-[#D14193] rounded-md p-4 pb-8">
+              <h2 className="font-semibold mb-4 text-white">Contributions</h2>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Allowed Contributors
+                </label>
+                <div className="flex gap-4">
+                  <Input
+                    value={friendUsernameSearchContributorVal}
+                    onChange={(e) =>
+                      setFriendUsernameSearchContributorVal(e.target.value)
+                    }
+                    placeholder="Search username"
+                    className="p-2 text-xs h-6 rounded-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
+                {(friendUsernameSearchContributorVal &&
+                filteredContributorFriends.length > 0
+                  ? filteredContributorFriends
+                  : friends
+                ).map((f) => (
+                  <div
+                    key={`${f.$id}-contributor`}
+                    className="p-1 text-sm rounded-sm border-border border bg-white text-black"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`${f.$id}-contributor`}
+                        checked={allowedContributorIds.includes(f.$id)}
+                        onCheckedChange={(val) => {
+                          if (!val)
+                            setAllowedContributorIds((prev) =>
+                              prev.filter((c) => c !== f.$id)
+                            );
+                          else
+                            setAllowedContributorIds((prev) => [
+                              ...prev,
+                              f.$id,
+                            ]);
+                        }}
+                      />
+                      <label
+                        htmlFor={`${f.$id}-contributor`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {truncateString(f.username, 12)}
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="col-span-8 bg-[#6A3CC8] p-4 rounded-md">
+              <h2 className="font-semibold mb-4 text-white">
+                Opening the Pinata
+              </h2>
+              <div className="space-y-8">
                 <FormField
                   name="contributeStart"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start</FormLabel>
+                      <FormLabel>Open Time</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          onChange={(e) => setMinimumOpenTime(e.target.value)}
+                          value={minimumOpenTime}
+                        />
                       </FormControl>
-                      <FormDescription>
-                        When can other users and/or yourself start uploading
-                        files into the Pinata.
+                      <FormDescription className="text-gray-800 text-xs">
+                        When this Pinata will be opened.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  name="contributeEnd"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        The name of your Pinata, e.g., "Anniversary",
-                        "Birthday", "2024 Time Capsule"
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Allowed Openers
+                    </label>
+                    <div className="flex gap-4">
+                      <Input
+                        value={friendUsernameSearchOpenerVal}
+                        onChange={(e) =>
+                          setFriendUsernameSearcOpenerVal(e.target.value)
+                        }
+                        placeholder="Search username"
+                        className="p-2 text-xs h-6 rounded-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
+                    {(friendUsernameSearchOpenerVal &&
+                    filteredOpenerFriends.length > 0
+                      ? filteredOpenerFriends
+                      : friends
+                    ).map((f) => (
+                      <div
+                        key={`${f.$id}-opener`}
+                        className="p-1 text-sm rounded-sm border-border border bg-white text-black"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`${f.$id}-opener`}
+                            checked={allowedOpenerIds.includes(f.$id)}
+                            onCheckedChange={(val) => {
+                              if (!val)
+                                setAllowedOpenerIds((prev) =>
+                                  prev.filter((c) => c !== f.$id)
+                                );
+                              else
+                                setAllowedOpenerIds((prev) => [...prev, f.$id]);
+                            }}
+                          />
+                          <label
+                            htmlFor={`${f.$id}-opener`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {truncateString(f.username, 12)}
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="flex">
               <Button type="submit" className="ml-auto" disabled={isLoading}>
-                Register
+                Create Pinata
               </Button>
             </div>
           </form>
