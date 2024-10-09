@@ -50,9 +50,13 @@ export default function DashboardPage() {
           </header>
           <div className="grid grid-cols-3 gap-4">
             {pinatas.map((p) => (
-              <div key={p.$id} className="p-4 rounded-md border border-border">
+              <Link
+                href={`/app/pinatas/${p.$id}`}
+                key={p.$id}
+                className="p-4 rounded-md border border-border"
+              >
                 {p.title}
-              </div>
+              </Link>
             ))}
           </div>
         </section>
