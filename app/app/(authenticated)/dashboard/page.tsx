@@ -4,16 +4,36 @@ import { Input } from "@/components/ui/input";
 import { useUser } from "@/contexts/user/UserContext";
 import { UserPlus } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AddFriendForm from "./AddFriendForm";
 import { useData } from "@/contexts/data/DataContext";
 import FriendList from "./FriendList";
-import { UserProfile } from "@/types";
+import { Pinata, UserProfile } from "@/types";
+import { config, databases } from "@/lib/appwrite";
+import { Query } from "appwrite";
 
 export default function DashboardPage() {
   const { currentUser } = useUser();
 
   const [friends, setFriends] = useState<UserProfile[]>([]);
+
+  const [pinatas, setPinatas] = useState<Pinata[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      if (currentUser) {
+        const pinatas = (
+          await databases.listDocuments(
+            config.dbId,
+            config.pinataCollectionId,
+            [Query.equal("userId", currentUser.$id), Query.limit(10)]
+          )
+        ).documents as Pinata[];
+
+        setPinatas(pinatas);
+      }
+    })();
+  }, []);
 
   return (
     <div>
@@ -28,6 +48,13 @@ export default function DashboardPage() {
               Create
             </Link>
           </header>
+          <div className="grid grid-cols-3 gap-4">
+            {pinatas.map((p) => (
+              <div key={p.$id} className="p-4 rounded-md border border-border">
+                {p.title}
+              </div>
+            ))}
+          </div>
         </section>
         <section className="col-span-6 border-border p-4 rounded-md shadow-sm border">
           <h2 className="font-semibold uppercase">People&apos;s Pinatas</h2>
