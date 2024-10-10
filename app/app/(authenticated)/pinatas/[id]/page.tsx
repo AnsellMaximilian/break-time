@@ -116,7 +116,7 @@ export default function PinataPage({
           width={250}
           height={250}
           alt="Pinata Thumbnail"
-          className="rounded-full"
+          className="rounded-full border-white border-8"
         />
       </div>
       <div className="col-span-4 bg-[#FFDD00] p-4">
