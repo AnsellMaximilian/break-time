@@ -13,6 +13,9 @@ import { fileTypeIcons, UnknownFileIcon } from "@/const/fileTypes";
 import { getFileUrl } from "@/utils/files";
 import Image from "next/image";
 import fallbackImg from "@/assets/break-time-square.png";
+import Countdown from "react-countdown";
+import { format } from "date-fns";
+import CountDownTimer from "@/components/CountDownTimer";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -119,9 +122,25 @@ export default function PinataPage({
           className="rounded-full border-white border-8"
         />
       </div>
-      <div className="col-span-4 bg-[#FFDD00] p-4">
-        {" "}
+      <div className="col-span-4 bg-[#FFDD00] p-4 text-black">
         <h2 className="text-xl font-semibold">Open the Pinata</h2>
+        {pinata?.minimumOpenTime && (
+          <div>
+            <div>
+              <div>Openable at</div>
+              <div>
+                {format(
+                  new Date(pinata.minimumOpenTime),
+                  "MMMM do, yyyy 'at' h:mm a"
+                )}
+              </div>
+            </div>
+
+            <div>
+              <CountDownTimer date={pinata.minimumOpenTime} />
+            </div>
+          </div>
+        )}
       </div>
       <div className="col-span-12 bg-[#CE3F8F] p-4">
         <h2 className="text-xl font-semibold">Other Menu</h2>
