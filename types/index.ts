@@ -39,3 +39,9 @@ export type Pinata = Models.Document & {
 
   thumbnailCid?: string;
 };
+
+export type Contribution = Models.Document & {
+  title: string;
+  fileType: string;
+  pinataId: string;
+};

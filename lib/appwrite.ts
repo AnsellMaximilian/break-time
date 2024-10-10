@@ -9,6 +9,9 @@ export const config = {
     process.env.NEXT_PUBLIC_USER_PROFILE_COLLECTION_ID
   ),
   pinataCollectionId: String(process.env.NEXT_PUBLIC_PINATA_COLLECTION_ID),
+  contributionCollectionId: String(
+    process.env.NEXT_PUBLIC_CONTRIBUTION_COLLECTION_ID
+  ),
 };
 
 export const client = new Client();
