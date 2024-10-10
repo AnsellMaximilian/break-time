@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import UploadDialog from "@/components/UploadDialog";
 import { config, databases } from "@/lib/appwrite";
 import { Contribution, Pinata } from "@/types";
@@ -11,6 +10,9 @@ import { useDropzone } from "react-dropzone";
 import { pinata as pnt } from "@/lib/pinata";
 import { ID, Query } from "appwrite";
 import { fileTypeIcons, UnknownFileIcon } from "@/const/fileTypes";
+import { getFileUrl } from "@/utils/files";
+import Image from "next/image";
+import fallbackImg from "@/assets/break-time-square.png";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -18,6 +20,7 @@ export default function PinataPage({
   params: { id: string };
 }) {
   const [pinata, setPinata] = useState<Pinata | null>(null);
+  const [thumbnailURL, setThumbnailURL] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [maxUploadProgress, setMaxUploadProgress] = useState(0);
   const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
@@ -77,6 +80,11 @@ export default function PinataPage({
         pinataId
       )) as Pinata;
 
+      if (pinata.thumbnailCid) {
+        const res = (await getFileUrl(pinata.thumbnailCid)) as string;
+        setThumbnailURL(res);
+      }
+
       setPinata(pinata);
 
       const contributions = (
@@ -93,13 +101,23 @@ export default function PinataPage({
 
   return (
     <div className="grid grid-cols-12 text-white rounded-md overflow-hidden">
-      <div className="col-span-8 bg-[#1DB9D2] p-4">
-        <h1 className="text-2xl font-bold">{pinata?.title}</h1>
-        <p className="">
-          {pinata?.description
-            ? pinata.description
-            : "No description for this Pinata."}
-        </p>
+      <div className="col-span-8 bg-[#1DB9D2] p-4 flex gap-8">
+        <div className="">
+          <h1 className="text-2xl font-bold">{pinata?.title}</h1>
+          <p className="">
+            {pinata?.description
+              ? pinata.description
+              : "No description for this Pinata."}
+          </p>
+        </div>
+        <Image
+          src={thumbnailURL}
+          onError={() => setThumbnailURL(fallbackImg.src)}
+          width={250}
+          height={250}
+          alt="Pinata Thumbnail"
+          className="rounded-full"
+        />
       </div>
       <div className="col-span-4 bg-[#FFDD00] p-4">
         {" "}
