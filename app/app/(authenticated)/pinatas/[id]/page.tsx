@@ -3,8 +3,8 @@
 import UploadDialog from "@/components/UploadDialog";
 import { config, databases } from "@/lib/appwrite";
 import { Contribution, Pinata } from "@/types";
-import { Upload } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import { Upload, UploadCloud } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { pinata as pnt } from "@/lib/pinata";
 import { ID, Query } from "appwrite";
@@ -15,6 +15,8 @@ import fallbackImg from "@/assets/break-time-square.png";
 import { format } from "date-fns";
 import CountDownTimer from "@/components/CountDownTimer";
 import loadingLogo from "@/assets/breaktime-logo.svg";
+import { Button } from "@/components/ui/button";
+import { FaUpload } from "react-icons/fa";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -28,6 +30,8 @@ export default function PinataPage({
   const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
   const [uploadMessage, setUploadMessage] = useState("");
   const [contributions, setContributions] = useState<Contribution[]>([]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     try {
@@ -146,42 +150,67 @@ export default function PinataPage({
           <div className="col-span-12 bg-[#CE3F8F] p-4">
             <h2 className="text-xl font-semibold">Other Menu</h2>
           </div>
-          <div className="col-span-12 bg-[#6D3AC6] p-4 space-y-8">
-            <h2 className="text-xl font-semibold">Files and Contributions</h2>
-            <div className="space-y-4">
-              <div>
-                These are your files. You can access them after the Pinata has
-                been opened
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                {contributions.map((c) => {
-                  const Icon = fileTypeIcons[c.fileType] ?? UnknownFileIcon;
-                  return (
-                    <div
-                      key={c.$id}
-                      className="p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
-                    >
-                      <Icon size={24} />{" "}
-                      <div className="text-xs">{c.title}</div>
-                    </div>
-                  );
-                })}
-              </div>
+          <div className="col-span-12 bg-[#6D3AC6] p-4 space-y-4">
+            <div className="flex justify-between gap-4">
+              <h2 className="text-xl font-semibold">Files and Contributions</h2>
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex gap-2"
+              >
+                <span>Upload</span> <UploadCloud />
+              </Button>
             </div>
             <div
-              className=" min-h-56 justify-center items-center flex-col flex gap-4 p-2 border-white border rounded-md"
-              {...getRootProps()}
+              className=" min-h-56 border-white flex flex-col"
+              {...getRootProps({
+                onClick: (event) => {
+                  event.stopPropagation();
+                },
+              })}
             >
-              <input {...getInputProps()} />
-              <Upload size={44} />
-              {isDragActive ? (
-                <p>Drop the files here...</p>
+              {contributions.length > 0 ? (
+                <div className="space-y-4">
+                  <div>
+                    These are your files. You can access them after the Pinata
+                    has been opened
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {contributions.map((c) => {
+                      const Icon = fileTypeIcons[c.fileType] ?? UnknownFileIcon;
+                      return (
+                        <div
+                          key={c.$id}
+                          className="p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
+                        >
+                          <Icon size={24} />{" "}
+                          <div className="text-xs">{c.title}</div>
+                        </div>
+                      );
+                    })}
+                    {isDragActive && (
+                      <div className="p-4 border border-white rounded-md flex gap-4 items-center bg-white text-black cursor-pointer">
+                        <UnknownFileIcon size={24} />{" "}
+                        <div className="text-xs">New File</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : (
-                <p>
-                  Drag and drop your file contribution(s) here, or click to
-                  select files
-                </p>
+                <div className="flex items-center flex-col justify-center gap-2 grow border-white border rounded-md">
+                  <Upload size={44} />
+
+                  {isDragActive ? (
+                    <p>Drop your files here...</p>
+                  ) : (
+                    <p>
+                      Drag and drop your file contribution(s) here, or click to
+                      select files
+                    </p>
+                  )}
+                </div>
               )}
+
+              <input {...getInputProps()} ref={fileInputRef} />
             </div>
           </div>
           <UploadDialog

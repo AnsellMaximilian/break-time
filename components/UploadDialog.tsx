@@ -32,14 +32,14 @@ export default function UploadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Uploading File(s)</DialogTitle>
+          <DialogTitle>Uploading Files</DialogTitle>
           <DialogDescription>
             Uploading your contributions. Please be patient.
           </DialogDescription>
         </DialogHeader>
         <div>
           <Progress value={(currentProgress / maxProgress) * 100} />
-          <p className="text-center">{message ?? "Uploading..."}</p>
+          <p className="text-center mt-2">{message ?? "Uploading..."}</p>
         </div>
       </DialogContent>
     </Dialog>
