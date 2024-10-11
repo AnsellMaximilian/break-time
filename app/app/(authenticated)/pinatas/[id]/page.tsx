@@ -109,15 +109,7 @@ export default function PinataPage({
     <div className="grow">
       {pinata ? (
         <div className="grid grid-cols-12 text-white rounded-md overflow-hidden">
-          <div className="col-span-8 bg-[#1DB9D2] p-4 flex gap-8">
-            <div className="">
-              <h1 className="text-2xl font-bold">{pinata?.title}</h1>
-              <p className="">
-                {pinata?.description
-                  ? pinata.description
-                  : "No description for this Pinata."}
-              </p>
-            </div>
+          <div className="col-span-12 lg:col-span-8 bg-[#1DB9D2] p-4 flex gap-8 row-start-2 lg:row-start-1 items-center">
             <Image
               src={thumbnailURL}
               onError={() => setThumbnailURL(fallbackImg.src)}
@@ -126,8 +118,18 @@ export default function PinataPage({
               alt="Pinata Thumbnail"
               className="rounded-full border-white border-8"
             />
+            <div className="">
+              <h1 className="text-3xl tracking-tight font-bold">
+                {pinata?.title}
+              </h1>
+              <p className="">
+                {pinata?.description
+                  ? pinata.description
+                  : "No description for this Pinata."}
+              </p>
+            </div>
           </div>
-          <div className="col-span-4 bg-[#FFDD00] p-4 text-black">
+          <div className="col-span-12 lg:col-span-4 bg-[#FFDD00] p-4 text-black">
             <h2 className="text-xl font-semibold">Open the Pinata</h2>
             {pinata?.minimumOpenTime && (
               <div>
