@@ -132,18 +132,18 @@ export default function PinataPage({
           <div className="col-span-12 lg:col-span-4 bg-[#FFDD00] p-4 text-black">
             <h2 className="text-xl font-semibold">Open the Pinata</h2>
             {pinata?.minimumOpenTime && (
-              <div>
-                <div>
-                  <div>Openable at</div>
-                  <div>
+              <div className="">
+                <div className="text-right">
+                  <span className="text-sm">Openable at</span>{" "}
+                  <span className="text-xs font-bold">
                     {format(
                       new Date(pinata.minimumOpenTime),
                       "MMMM do, yyyy 'at' h:mm a"
                     )}
-                  </div>
+                  </span>
                 </div>
 
-                <div>
+                <div className="mt-4 flex justify-center">
                   <CountDownTimer date={pinata.minimumOpenTime} />
                 </div>
               </div>
