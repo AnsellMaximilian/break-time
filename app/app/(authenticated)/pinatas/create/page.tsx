@@ -27,6 +27,7 @@ import { truncateString } from "@/utils/common";
 import { pinata } from "@/lib/pinata";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   title: z.string().min(2).max(100),
@@ -50,6 +51,8 @@ export default function CreatePinataPage() {
   const [contributeEnd, setContributeEnd] = useState("");
 
   const [minimumOpenTime, setMinimumOpenTime] = useState("");
+
+  const [isPublic, setIsPublic] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -334,6 +337,16 @@ export default function CreatePinataPage() {
                     Allowed Contributors
                   </label>
                   <div className="flex gap-4">
+                    <div className="flex gap-1 items-center">
+                      <Switch
+                        checked={isPublic}
+                        onCheckedChange={(v) => {
+                          setIsPublic(v);
+                        }}
+                      />{" "}
+                      <span className="text-sm">Public</span>
+                    </div>
+
                     <Input
                       value={friendUsernameSearchContributorVal}
                       onChange={(e) =>
