@@ -36,6 +36,7 @@ export type Pinata = Models.Document & {
   minimumOpenTime?: string;
   allowedContributorIds: string[];
   allowedOpenerIds: string[];
+  openerIds: string[];
 
   thumbnailCid?: string;
 };

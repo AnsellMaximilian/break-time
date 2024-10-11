@@ -16,7 +16,7 @@ import { format } from "date-fns";
 import CountDownTimer from "@/components/CountDownTimer";
 import loadingLogo from "@/assets/breaktime-logo.svg";
 import { Button } from "@/components/ui/button";
-import { FaUpload } from "react-icons/fa";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -29,6 +29,8 @@ export default function PinataPage({
   const [maxUploadProgress, setMaxUploadProgress] = useState(0);
   const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
   const [uploadMessage, setUploadMessage] = useState("");
+
+  const [contributionsLoading, setContributionsLoading] = useState(false);
   const [contributions, setContributions] = useState<Contribution[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -129,7 +131,7 @@ export default function PinataPage({
               </p>
             </div>
           </div>
-          <div className="col-span-12 lg:col-span-4 bg-[#FFDD00] p-4 text-black">
+          <div className="col-span-12 lg:col-span-4 bg-[#FFDD00] p-4 text-black flex flex-col">
             <h2 className="text-xl font-semibold">Open the Pinata</h2>
             {pinata?.minimumOpenTime && (
               <div className="">
@@ -148,9 +150,16 @@ export default function PinataPage({
                 </div>
               </div>
             )}
+
+            <div className="mt-auto flex items-center">
+              <div>0/3</div>
+              <button className="w-24 h-24 shadow-md rounded-full bg-[#FD8900] text-white font-bold uppercase ml-auto text-xl hover:opacity-90">
+                Open
+              </button>
+            </div>
           </div>
           <div className="col-span-12 bg-[#CE3F8F] p-4">
-            <h2 className="text-xl font-semibold">Other Menu</h2>
+            <h2 className="text-xl font-semibold">Friends and Contributors</h2>
           </div>
           <div className="col-span-12 bg-[#6D3AC6] p-4 space-y-4">
             <div className="flex justify-between gap-4">
@@ -170,7 +179,13 @@ export default function PinataPage({
                 },
               })}
             >
-              {contributions.length > 0 ? (
+              {contributionsLoading ? (
+                <div className="grid grid-cols-3 gap-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 rounded-md" />
+                  ))}
+                </div>
+              ) : contributions.length > 0 ? (
                 <div className="space-y-4">
                   <div>
                     These are your files. You can access them after the Pinata
