@@ -78,10 +78,12 @@ export default function CreatePinataPage() {
   useEffect(() => {
     if (friendUsernameSearchContributorVal) {
       setFilteredContributorFriends(
-        friends.filter((f) =>
-          f.username
-            .toLowerCase()
-            .includes(friendUsernameSearchContributorVal.toLowerCase())
+        friends.filter(
+          (f) =>
+            f.username
+              .toLowerCase()
+              .includes(friendUsernameSearchContributorVal.toLowerCase()) ||
+            currentUser?.$id === f.$id
         )
       );
     }
@@ -90,10 +92,12 @@ export default function CreatePinataPage() {
   useEffect(() => {
     if (friendUsernameSearchOpenerVal) {
       setFilteredOpenerFriends(
-        friends.filter((f) =>
-          f.username
-            .toLowerCase()
-            .includes(friendUsernameSearchOpenerVal.toLowerCase())
+        friends.filter(
+          (f) =>
+            f.username
+              .toLowerCase()
+              .includes(friendUsernameSearchOpenerVal.toLowerCase()) ||
+            currentUser?.$id === f.$id
         )
       );
     }
@@ -172,6 +176,13 @@ export default function CreatePinataPage() {
     }
   }
 
+  useEffect(() => {
+    if (currentUser) {
+      setAllowedContributorIds((prev) => [...prev, currentUser.$id]);
+      setAllowedOpenerIds((prev) => [...prev, currentUser.$id]);
+    }
+  }, [currentUser]);
+
   const handleThumbnailChange: React.ChangeEventHandler<HTMLInputElement> = (
     e
   ) => {
@@ -191,269 +202,307 @@ export default function CreatePinataPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">Create Pinata</h1>
 
-      <div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-12 gap-8 bg-[#FEDE00] p-4 rounded-md">
-              <div className="space-y-8 col-span-8">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Pinata Title" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        The name of your Pinata, e.g., "Anniversary",
-                        "Birthday", "2024 Time Capsule"
-                      </FormDescription>
+      {currentUser?.profile ? (
+        <div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid grid-cols-12 gap-8 bg-[#FEDE00] p-4 rounded-md text-black">
+                <div className="space-y-8 col-span-8">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Pinata Title" {...field} />
+                        </FormControl>
+                        <FormDescription className="text-gray-800">
+                          The name of your Pinata, e.g., "Anniversary",
+                          "Birthday", "2024 Time Capsule"
+                        </FormDescription>
 
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Pinata description..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Further information on your Pinata, e.g., "The contents
-                        of this Pinata represent the celebration of John and
-                        Mary's 17th Anniversary"
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormItem className="col-span-4">
-                <FormLabel>Thumbnail</FormLabel>
-                <div className="flex flex-col gap-4">
-                  <Image
-                    className="w-64 h-64 border-border border-4 rounded-md"
-                    width={500}
-                    height={500}
-                    alt="thumbnail"
-                    onClick={() => fileInputRef?.current?.click()}
-                    src={thumbnailPreviewURL ?? breakTimeSquare}
-                  ></Image>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      className=""
-                      accept="image/*"
-                      onChange={handleThumbnailChange}
-                      ref={fileInputRef}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This is your public display name.
-                  </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Pinata description..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-800">
+                          Further information on your Pinata, e.g., "The
+                          contents of this Pinata represent the celebration of
+                          John and Mary's 17th Anniversary"
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              </FormItem>
-            </div>
-
-            <div className="col-span-8 bg-[#1CB9D1] p-4 rounded-md">
-              <h2 className="font-semibold mb-4 text-white">
-                Contribution Time
-              </h2>
-              <div className="flex gap-8">
-                <FormField
-                  name="contributeStart"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          onChange={(e) => setContributeStart(e.target.value)}
-                          value={contributeStart}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-gray-800 text-xs">
-                        When can other users and/or yourself start uploading
-                        files into the Pinata.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="contributeEnd"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          onChange={(e) => setContributeEnd(e.target.value)}
-                          value={contributeEnd}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-gray-800 text-xs">
-                        The name of your Pinata, e.g., "Anniversary",
-                        "Birthday", "2024 Time Capsule"
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormItem className="col-span-4">
+                  <FormLabel>Thumbnail</FormLabel>
+                  <div className="flex flex-col gap-4">
+                    <Image
+                      className="w-64 h-64 border-border border-4 rounded-md"
+                      width={500}
+                      height={500}
+                      alt="thumbnail"
+                      onClick={() => fileInputRef?.current?.click()}
+                      src={thumbnailPreviewURL ?? breakTimeSquare}
+                    ></Image>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        className=""
+                        accept="image/*"
+                        onChange={handleThumbnailChange}
+                        ref={fileInputRef}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-gray-800">
+                      The thumbnail picture for your Pinata.
+                    </FormDescription>
+                  </div>
+                </FormItem>
               </div>
-            </div>
 
-            <div className="col-span-8 bg-[#D14193] rounded-md p-4 pb-8">
-              <h2 className="font-semibold mb-4 text-white">Contributions</h2>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Allowed Contributors
-                </label>
-                <div className="flex gap-4">
-                  <Input
-                    value={friendUsernameSearchContributorVal}
-                    onChange={(e) =>
-                      setFriendUsernameSearchContributorVal(e.target.value)
-                    }
-                    placeholder="Search username"
-                    className="p-2 text-xs h-6 rounded-sm"
+              <div className="col-span-8 bg-[#1CB9D1] p-4 rounded-md">
+                <h2 className="font-semibold mb-4 text-white">
+                  Contribution Time
+                </h2>
+                <div className="flex gap-8">
+                  <FormField
+                    name="contributeStart"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            onChange={(e) => setContributeStart(e.target.value)}
+                            value={contributeStart}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-800">
+                          Select the date and time when contributions to the
+                          time capsule will begin. Users will not be able to
+                          contribute before this date.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="contributeEnd"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            onChange={(e) => setContributeEnd(e.target.value)}
+                            value={contributeEnd}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-800">
+                          Select the date and time when contributions to the
+                          time capsule will close. After this time, no further
+                          contributions will be accepted.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
-                {(friendUsernameSearchContributorVal &&
-                filteredContributorFriends.length > 0
-                  ? filteredContributorFriends
-                  : friends
-                ).map((f) => (
-                  <div
-                    key={`${f.$id}-contributor`}
-                    className="p-1 text-sm rounded-sm border-border border bg-white text-black"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${f.$id}-contributor`}
-                        checked={allowedContributorIds.includes(f.$id)}
-                        onCheckedChange={(val) => {
-                          if (!val)
-                            setAllowedContributorIds((prev) =>
-                              prev.filter((c) => c !== f.$id)
-                            );
-                          else
-                            setAllowedContributorIds((prev) => [
-                              ...prev,
-                              f.$id,
-                            ]);
-                        }}
-                      />
-                      <label
-                        htmlFor={`${f.$id}-contributor`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {truncateString(f.username, 12)}
-                      </label>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            <div className="col-span-8 bg-[#6A3CC8] p-4 rounded-md">
-              <h2 className="font-semibold mb-4 text-white">
-                Opening the Pinata
-              </h2>
-              <div className="space-y-8">
-                <FormField
-                  name="contributeStart"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Open Time</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          onChange={(e) => setMinimumOpenTime(e.target.value)}
-                          value={minimumOpenTime}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-gray-800 text-xs">
-                        When this Pinata will be opened.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Allowed Openers
-                    </label>
-                    <div className="flex gap-4">
-                      <Input
-                        value={friendUsernameSearchOpenerVal}
-                        onChange={(e) =>
-                          setFriendUsernameSearcOpenerVal(e.target.value)
-                        }
-                        placeholder="Search username"
-                        className="p-2 text-xs h-6 rounded-sm"
-                      />
-                    </div>
+              <div className="col-span-8 bg-[#D14193] rounded-md p-4 pb-8">
+                <h2 className="font-semibold mb-4 text-white">Contributions</h2>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Allowed Contributors
+                  </label>
+                  <div className="flex gap-4">
+                    <Input
+                      value={friendUsernameSearchContributorVal}
+                      onChange={(e) =>
+                        setFriendUsernameSearchContributorVal(e.target.value)
+                      }
+                      placeholder="Search username"
+                      className="p-2 text-xs h-6 rounded-sm"
+                    />
                   </div>
-                  <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
-                    {(friendUsernameSearchOpenerVal &&
-                    filteredOpenerFriends.length > 0
-                      ? filteredOpenerFriends
-                      : friends
-                    ).map((f) => (
-                      <div
-                        key={`${f.$id}-opener`}
-                        className="p-1 text-sm rounded-sm border-border border bg-white text-black"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${f.$id}-opener`}
-                            checked={allowedOpenerIds.includes(f.$id)}
-                            onCheckedChange={(val) => {
-                              if (!val)
-                                setAllowedOpenerIds((prev) =>
-                                  prev.filter((c) => c !== f.$id)
-                                );
-                              else
-                                setAllowedOpenerIds((prev) => [...prev, f.$id]);
-                            }}
-                          />
-                          <label
-                            htmlFor={`${f.$id}-opener`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {truncateString(f.username, 12)}
-                          </label>
-                        </div>
+                </div>
+                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
+                  {[
+                    currentUser.profile,
+                    ...(friendUsernameSearchContributorVal &&
+                    filteredContributorFriends.length > 0
+                      ? filteredContributorFriends
+                      : friends),
+                  ].map((f) => (
+                    <div
+                      key={`${f.$id}-contributor`}
+                      className="p-2 text-sm rounded-sm border-border border bg-white text-black"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${f.$id}-contributor`}
+                          checked={allowedContributorIds.includes(f.$id)}
+                          onCheckedChange={(val) => {
+                            if (!val)
+                              setAllowedContributorIds((prev) =>
+                                prev.filter((c) => c !== f.$id)
+                              );
+                            else
+                              setAllowedContributorIds((prev) => [
+                                ...prev,
+                                f.$id,
+                              ]);
+                          }}
+                        />
+                        <label
+                          htmlFor={`${f.$id}-contributor`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {currentUser.$id !== f.$id ? (
+                            truncateString(f.username, 12)
+                          ) : (
+                            <span className="font-bold">Include Yourself</span>
+                          )}
+                        </label>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                </div>
+                <FormDescription className="text-gray-200 mt-2">
+                  Specify friends are permitted to contribute to this time
+                  capsule. You may choose to exclude yourself from the list if
+                  you do not wish to contribute.
+                </FormDescription>
+              </div>
+
+              <div className="col-span-8 bg-[#6A3CC8] p-4 rounded-md">
+                <h2 className="font-semibold mb-4 text-white">
+                  Opening the Pinata
+                </h2>
+                <div className="space-y-8">
+                  <FormField
+                    name="contributeStart"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Open Time</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            onChange={(e) => setMinimumOpenTime(e.target.value)}
+                            value={minimumOpenTime}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-200">
+                          Set the earliest date and time when the time capsule
+                          can be opened. The capsule will remain sealed until
+                          this moment, after which it can be accessed by the
+                          authorized openers.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Allowed Openers
+                      </label>
+                      <div className="flex gap-4">
+                        <Input
+                          value={friendUsernameSearchOpenerVal}
+                          onChange={(e) =>
+                            setFriendUsernameSearcOpenerVal(e.target.value)
+                          }
+                          placeholder="Search username"
+                          className="p-2 text-xs h-6 rounded-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
+                      {[
+                        currentUser.profile,
+                        ...(friendUsernameSearchOpenerVal &&
+                        filteredOpenerFriends.length > 0
+                          ? filteredOpenerFriends
+                          : friends),
+                      ].map((f) => (
+                        <div
+                          key={`${f.$id}-opener`}
+                          className="p-2 text-sm rounded-sm border-border border bg-white text-black"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`${f.$id}-opener`}
+                              checked={allowedOpenerIds.includes(f.$id)}
+                              onCheckedChange={(val) => {
+                                if (!val)
+                                  setAllowedOpenerIds((prev) =>
+                                    prev.filter((c) => c !== f.$id)
+                                  );
+                                else
+                                  setAllowedOpenerIds((prev) => [
+                                    ...prev,
+                                    f.$id,
+                                  ]);
+                              }}
+                            />
+                            <label
+                              htmlFor={`${f.$id}-opener`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {currentUser.$id !== f.$id ? (
+                                truncateString(f.username, 12)
+                              ) : (
+                                <span className="font-bold">
+                                  Include Yourself
+                                </span>
+                              )}
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <FormDescription className="text-gray-200 mt-2">
+                      List the individuals who are required to authorize the
+                      opening of the time capsule. Each person must press the
+                      'Open' button to unlock and reveal the contents. All
+                      listed individuals must approve before the capsule can be
+                      opened.
+                    </FormDescription>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex">
-              <Button type="submit" className="ml-auto" disabled={isLoading}>
-                Create Pinata
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
+              <div className="flex">
+                <Button type="submit" className="ml-auto" disabled={isLoading}>
+                  Create Pinata
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      ) : (
+        <div>Loading...</div>
+      )}
     </div>
   );
 }
