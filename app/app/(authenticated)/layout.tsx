@@ -5,6 +5,8 @@ import Image from "next/image";
 import horizontalLogo from "@/assets/breaktime-logo-horizontal.svg";
 import Link from "next/link";
 import { DataContextProvider } from "@/contexts/data/DataContextProvider";
+import UserMenu from "@/components/UserMenu";
+import { useUser } from "@/contexts/user/UserContext";
 
 const NavItem = ({ label, href }: { label: string; href: string }) => {
   return (
@@ -19,6 +21,7 @@ function AppLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { currentUser } = useUser();
   return (
     <DataContextProvider>
       <div className="h-screen flex flex-col">
@@ -36,7 +39,9 @@ function AppLayout({
               <NavItem label="Home" href="/app/dashboard" />
               <NavItem label="Home" href="/app/dashboard" />
             </ul>
-            <div className="ml-auto">Profile bruh</div>
+            <div className="ml-auto">
+              {currentUser && <UserMenu user={currentUser} />}
+            </div>
           </nav>
         </header>
         <div className="container p-4 mx-auto grow flex flex-col">
