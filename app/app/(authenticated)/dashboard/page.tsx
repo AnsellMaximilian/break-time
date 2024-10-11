@@ -11,6 +11,8 @@ import FriendList from "./FriendList";
 import { Pinata, UserProfile } from "@/types";
 import { config, databases } from "@/lib/appwrite";
 import { Query } from "appwrite";
+import { getColorScheme } from "@/utils/colors";
+import PinataCard from "@/components/PinataCard";
 
 export default function DashboardPage() {
   const { currentUser } = useUser();
@@ -38,7 +40,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="grid grid-cols-12 gap-4">
-        <section className="col-span-12 border-border p-4 rounded-md shadow-sm border">
+        <section className="col-span-12 border-border p-4 rounded-md shadow-sm border bg-[#FD8900]">
           <header className="flex justify-between items-center">
             <h2 className="font-semibold uppercase">Pinatas</h2>
             <Link
@@ -49,14 +51,8 @@ export default function DashboardPage() {
             </Link>
           </header>
           <div className="grid grid-cols-3 gap-4">
-            {pinatas.map((p) => (
-              <Link
-                href={`/app/pinatas/${p.$id}`}
-                key={p.$id}
-                className="p-4 rounded-md border border-border"
-              >
-                {p.title}
-              </Link>
+            {pinatas.map((p, i) => (
+              <PinataCard pinata={p} index={i} />
             ))}
           </div>
         </section>
