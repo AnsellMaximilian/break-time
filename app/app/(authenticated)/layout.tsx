@@ -21,7 +21,7 @@ function AppLayout({
 }>) {
   return (
     <DataContextProvider>
-      <div className="h-screen">
+      <div className="h-screen flex flex-col">
         <header className="p-4">
           <nav className="flex gap-8 items-center">
             <Image
@@ -39,7 +39,9 @@ function AppLayout({
             <div className="ml-auto">Profile bruh</div>
           </nav>
         </header>
-        <div className="container p-4 mx-auto">{children}</div>
+        <div className="container p-4 mx-auto grow flex flex-col">
+          {children}
+        </div>
       </div>
     </DataContextProvider>
   );
