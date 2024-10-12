@@ -35,9 +35,8 @@ function AppLayout({
               className="w-24"
             />
             <ul className="flex items-center gap-4">
-              <NavItem label="Home" href="/app/dashboard" />
-              <NavItem label="Home" href="/app/dashboard" />
-              <NavItem label="Home" href="/app/dashboard" />
+              <NavItem label="Dashboard" href="/app/dashboard" />
+              <NavItem label="Profile" href="/app/profile" />
             </ul>
             <div className="ml-auto">
               {currentUser && <UserMenu user={currentUser} />}

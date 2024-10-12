@@ -53,6 +53,7 @@ export default function CreatePinataPage() {
   const [minimumOpenTime, setMinimumOpenTime] = useState("");
 
   const [isPublic, setIsPublic] = useState(false);
+  const [doesOpenAutomatically, setDoesOpenAutomatically] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -337,7 +338,7 @@ export default function CreatePinataPage() {
                     Allowed Contributors
                   </label>
                   <div className="flex gap-4">
-                    <div className="flex gap-1 items-center">
+                    {/* <label className="flex gap-1 items-center">
                       <Switch
                         checked={isPublic}
                         onCheckedChange={(v) => {
@@ -345,9 +346,10 @@ export default function CreatePinataPage() {
                         }}
                       />{" "}
                       <span className="text-sm">Public</span>
-                    </div>
+                    </label> */}
 
                     <Input
+                      disabled={isPublic}
                       value={friendUsernameSearchContributorVal}
                       onChange={(e) =>
                         setFriendUsernameSearchContributorVal(e.target.value)
@@ -357,53 +359,65 @@ export default function CreatePinataPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
-                  {[
-                    currentUser.profile,
-                    ...(friendUsernameSearchContributorVal &&
-                    filteredContributorFriends.length > 0
-                      ? filteredContributorFriends
-                      : friends),
-                  ].map((f) => (
-                    <div
-                      key={`${f.$id}-contributor`}
-                      className="p-2 text-sm rounded-sm border-border border bg-white text-black"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`${f.$id}-contributor`}
-                          checked={allowedContributorIds.includes(f.$id)}
-                          onCheckedChange={(val) => {
-                            if (!val)
-                              setAllowedContributorIds((prev) =>
-                                prev.filter((c) => c !== f.$id)
-                              );
-                            else
-                              setAllowedContributorIds((prev) => [
-                                ...prev,
-                                f.$id,
-                              ]);
-                          }}
-                        />
-                        <label
-                          htmlFor={`${f.$id}-contributor`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                {isPublic ? (
+                  <div className="text-center mt-4 py-4">
+                    This Pinata will accept contributions from any authenticated
+                    users.
+                  </div>
+                ) : (
+                  <div>
+                    <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
+                      {[
+                        currentUser.profile,
+                        ...(friendUsernameSearchContributorVal &&
+                        filteredContributorFriends.length > 0
+                          ? filteredContributorFriends
+                          : friends),
+                      ].map((f) => (
+                        <div
+                          key={`${f.$id}-contributor`}
+                          className="p-2 text-sm rounded-sm border-border border bg-white text-black"
                         >
-                          {currentUser.$id !== f.$id ? (
-                            truncateString(f.username, 12)
-                          ) : (
-                            <span className="font-bold">Include Yourself</span>
-                          )}
-                        </label>
-                      </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`${f.$id}-contributor`}
+                              checked={allowedContributorIds.includes(f.$id)}
+                              onCheckedChange={(val) => {
+                                if (!val)
+                                  setAllowedContributorIds((prev) =>
+                                    prev.filter((c) => c !== f.$id)
+                                  );
+                                else
+                                  setAllowedContributorIds((prev) => [
+                                    ...prev,
+                                    f.$id,
+                                  ]);
+                              }}
+                            />
+                            <label
+                              htmlFor={`${f.$id}-contributor`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {currentUser.$id !== f.$id ? (
+                                truncateString(f.username, 12)
+                              ) : (
+                                <span className="font-bold">
+                                  Include Yourself
+                                </span>
+                              )}
+                            </label>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <FormDescription className="text-gray-200 mt-2">
-                  Specify friends are permitted to contribute to this time
-                  capsule. You may choose to exclude yourself from the list if
-                  you do not wish to contribute.
-                </FormDescription>
+                    <FormDescription className="text-gray-200 mt-2">
+                      Specify which of your friends are permitted to contribute
+                      to this time capsule. You may choose to exclude yourself
+                      from the list if you do not wish to contribute. Make sure
+                      you trust the people you include in this list.
+                    </FormDescription>
+                  </div>
+                )}
               </div>
 
               <div className="col-span-8 bg-[#6A3CC8] p-4 rounded-md">
@@ -440,6 +454,17 @@ export default function CreatePinataPage() {
                         Allowed Openers
                       </label>
                       <div className="flex gap-4">
+                        <label className="flex gap-1 items-center">
+                          <Switch
+                            checked={doesOpenAutomatically}
+                            onCheckedChange={(v) => {
+                              setDoesOpenAutomatically(v);
+                            }}
+                          />{" "}
+                          <span className="text-sm w-max">
+                            Open Automatically
+                          </span>
+                        </label>
                         <Input
                           value={friendUsernameSearchOpenerVal}
                           onChange={(e) =>
@@ -450,57 +475,66 @@ export default function CreatePinataPage() {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
-                      {[
-                        currentUser.profile,
-                        ...(friendUsernameSearchOpenerVal &&
-                        filteredOpenerFriends.length > 0
-                          ? filteredOpenerFriends
-                          : friends),
-                      ].map((f) => (
-                        <div
-                          key={`${f.$id}-opener`}
-                          className="p-2 text-sm rounded-sm border-border border bg-white text-black"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`${f.$id}-opener`}
-                              checked={allowedOpenerIds.includes(f.$id)}
-                              onCheckedChange={(val) => {
-                                if (!val)
-                                  setAllowedOpenerIds((prev) =>
-                                    prev.filter((c) => c !== f.$id)
-                                  );
-                                else
-                                  setAllowedOpenerIds((prev) => [
-                                    ...prev,
-                                    f.$id,
-                                  ]);
-                              }}
-                            />
-                            <label
-                              htmlFor={`${f.$id}-opener`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    {doesOpenAutomatically ? (
+                      <div className="text-center mt-4 py-4">
+                        This Pinata will now open automaticall on the specified
+                        Open Time.
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2">
+                          {[
+                            currentUser.profile,
+                            ...(friendUsernameSearchOpenerVal &&
+                            filteredOpenerFriends.length > 0
+                              ? filteredOpenerFriends
+                              : friends),
+                          ].map((f) => (
+                            <div
+                              key={`${f.$id}-opener`}
+                              className="p-2 text-sm rounded-sm border-border border bg-white text-black"
                             >
-                              {currentUser.$id !== f.$id ? (
-                                truncateString(f.username, 12)
-                              ) : (
-                                <span className="font-bold">
-                                  Include Yourself
-                                </span>
-                              )}
-                            </label>
-                          </div>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`${f.$id}-opener`}
+                                  checked={allowedOpenerIds.includes(f.$id)}
+                                  onCheckedChange={(val) => {
+                                    if (!val)
+                                      setAllowedOpenerIds((prev) =>
+                                        prev.filter((c) => c !== f.$id)
+                                      );
+                                    else
+                                      setAllowedOpenerIds((prev) => [
+                                        ...prev,
+                                        f.$id,
+                                      ]);
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`${f.$id}-opener`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                  {currentUser.$id !== f.$id ? (
+                                    truncateString(f.username, 12)
+                                  ) : (
+                                    <span className="font-bold">
+                                      Include Yourself
+                                    </span>
+                                  )}
+                                </label>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    <FormDescription className="text-gray-200 mt-2">
-                      List the individuals who are required to authorize the
-                      opening of the time capsule. Each person must press the
-                      'Open' button to unlock and reveal the contents. All
-                      listed individuals must approve before the capsule can be
-                      opened.
-                    </FormDescription>
+                        <FormDescription className="text-gray-200 mt-2">
+                          List the individuals who are required to authorize the
+                          opening of the time capsule. Each person must press
+                          the 'Open' button to unlock and reveal the contents.
+                          All listed individuals must approve before the capsule
+                          can be opened.
+                        </FormDescription>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
