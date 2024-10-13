@@ -6,15 +6,8 @@ import {
   FileScan,
   FileData,
 } from "pangea-node-sdk";
-import formidable from "formidable";
 
 export const dynamic = "force-dynamic";
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 const pangeaConfig = new PangeaConfig({
   domain: String(process.env.PANGEA_FILE_SCAN_DOMAIN),
