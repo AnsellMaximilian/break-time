@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User } from "@/types";
 import { useUser } from "@/contexts/user/UserContext";
+import Link from "next/link";
 export default function UserMenu({ user }: { user: User }) {
   const { logout } = useUser();
 
@@ -27,9 +28,10 @@ export default function UserMenu({ user }: { user: User }) {
       <DropdownMenuContent>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Profile</DropdownMenuItem>
-        <DropdownMenuItem>Billing</DropdownMenuItem>
-        <DropdownMenuItem>Team</DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link href="/app/profile">Profile</Link>
+        </DropdownMenuItem>
+
         <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -13,6 +13,7 @@ import { config, databases } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { getColorScheme } from "@/utils/colors";
 import PinataCard from "@/components/PinataCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
   const { currentUser } = useUser();
@@ -21,9 +22,11 @@ export default function DashboardPage() {
 
   const [pinatas, setPinatas] = useState<Pinata[]>([]);
 
+  const [pinatasLoading, setPinatasLoading] = useState(false);
   useEffect(() => {
     (async () => {
       if (currentUser) {
+        setPinatasLoading(true);
         const pinatas = (
           await databases.listDocuments(
             config.dbId,
@@ -34,6 +37,7 @@ export default function DashboardPage() {
 
         setPinatas(pinatas);
       }
+      setPinatasLoading(false);
     })();
   }, []);
 
@@ -51,9 +55,13 @@ export default function DashboardPage() {
             </Link>
           </header>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-            {pinatas.map((p, i) => (
-              <PinataCard key={p.$id} pinata={p} index={i} />
-            ))}
+            {pinatasLoading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton className="h-32" />
+                ))
+              : pinatas.map((p, i) => (
+                  <PinataCard key={p.$id} pinata={p} index={i} />
+                ))}
           </div>
         </section>
         <section className="col-span-6 border-border p-4 rounded-md shadow-sm border">
