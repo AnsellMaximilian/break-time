@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,18 +16,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import breakTimeSquare from "@/assets/break-time-square.png";
+
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/contexts/user/UserContext";
 import { config, databases } from "@/lib/appwrite";
 import { UserProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
+import { pinata } from "@/lib/pinata";
+import UploadDialog from "@/components/UploadDialog";
+import { getFileUrl } from "@/utils/files";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -46,6 +45,15 @@ export default function Page() {
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePicturePreviewURL, setProfilePicturePreviewURL] = useState<
+    string | null
+  >(null);
+
+  const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -89,11 +97,79 @@ export default function Page() {
     }
   }
 
+  const handleThumbnailChange: React.ChangeEventHandler<
+    HTMLInputElement
+  > = async (e) => {
+    if (!currentUser?.profile) return;
+    const file = e.target.files ? e.target.files[0] : null;
+
+    if (file) {
+      setCurrentUploadProgress(0);
+      setProfilePicture(file);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreviewURL(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // actually uploading
+      setIsUploading(true);
+      const keyRequest = await fetch("/api/key");
+      setUploadMessage(`Received key for ${file.name}`);
+
+      setCurrentUploadProgress((prev) => prev + 1);
+
+      const keyData = await keyRequest.json();
+      const upload = await pinata.upload.file(file).key(keyData.JWT);
+      setUploadMessage(`Uploaded file ${file.name}`);
+      setCurrentUploadProgress((prev) => prev + 1);
+
+      if (currentUser.profile.profilePictureFileId) {
+        const delRes = await fetch("/api/delete-files", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileIds: currentUser.profile.profilePictureFileId,
+          }),
+        });
+        setUploadMessage(`Deleted old profile picture`);
+        setCurrentUploadProgress((prev) => prev + 1);
+      }
+
+      await databases.updateDocument(
+        config.dbId,
+        config.userProfileCollectionId,
+        currentUser.profile.$id,
+        {
+          profilePictureFileId: upload.id,
+          profilePictureCid: upload.cid,
+        }
+      );
+
+      setUploadMessage(`Updated metadata`);
+      setCurrentUploadProgress((prev) => prev + 1);
+
+      setIsUploading(false);
+    }
+  };
+
   useEffect(() => {
     if (currentUser?.profile) {
       form.setValue("username", currentUser.profile.username);
       form.setValue("name", currentUser.profile.name || "");
       form.setValue("bio", currentUser.profile.bio || "");
+
+      (async () => {
+        if (currentUser.profile.profilePictureCid) {
+          const res = (await getFileUrl(
+            currentUser.profile.profilePictureCid
+          )) as string;
+          setProfilePicturePreviewURL(res);
+        }
+      })();
     }
   }, [currentUser?.profile, form]);
   return (
@@ -105,36 +181,68 @@ export default function Page() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 max-w-[800px]"
           >
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
+            <div className="flex gap-4">
+              <div className="space-y-4 grow">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem className="grow">
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Your username"
+                          {...field}
+                          disabled
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        This is your public display name.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your name" {...field} />
+                      </FormControl>
+                      <FormDescription>This is your name.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormItem className="">
+                <FormLabel>Thumbnail</FormLabel>
+                <div className="flex flex-col gap-4">
+                  <Image
+                    className="w-40 h-40 border-border border-4 rounded-md"
+                    width={500}
+                    height={500}
+                    alt="thumbnail"
+                    onClick={() => fileInputRef?.current?.click()}
+                    src={profilePicturePreviewURL ?? breakTimeSquare}
+                  ></Image>
                   <FormControl>
-                    <Input placeholder="Your username" {...field} disabled />
+                    <Input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleThumbnailChange}
+                      ref={fileInputRef}
+                    />
                   </FormControl>
-                  <FormDescription>
-                    This is your public display name.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your name" {...field} />
-                  </FormControl>
-                  <FormDescription>This is your name.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                </div>
+              </FormItem>
+            </div>
+
             <FormField
               control={form.control}
               name="bio"
@@ -159,6 +267,14 @@ export default function Page() {
           </form>
         </Form>
       </div>
+      <UploadDialog
+        title="Uploading Profile Picture"
+        description="Replacing or uploading new profile picture"
+        currentProgress={currentUploadProgress}
+        maxProgress={currentUser?.profile.profilePictureFileId ? 4 : 3}
+        message={uploadMessage}
+        open={isUploading}
+      />
     </div>
   );
 }

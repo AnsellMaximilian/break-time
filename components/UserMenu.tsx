@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
@@ -14,15 +14,30 @@ import {
 import { User } from "@/types";
 import { useUser } from "@/contexts/user/UserContext";
 import Link from "next/link";
+import { getFileUrl } from "@/utils/files";
 export default function UserMenu({ user }: { user: User }) {
   const { logout } = useUser();
+  const [profilePictureURL, setProfilePictureURL] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    (async () => {
+      if (user.profile?.profilePictureCid) {
+        const res = (await getFileUrl(
+          user.profile.profilePictureCid
+        )) as string;
+        setProfilePictureURL(res);
+      }
+    })();
+  }, []);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarImage src={profilePictureURL ?? ""} />
+          <AvatarFallback>{user.name}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
