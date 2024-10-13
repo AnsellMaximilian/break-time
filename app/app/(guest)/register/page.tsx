@@ -75,6 +75,8 @@ function RegisterPage() {
         ExecutionMethod.POST
       );
 
+      console.log(res);
+
       if (!res.errors) {
         router.push("/app/profile");
       } else {
@@ -105,7 +107,7 @@ function RegisterPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"

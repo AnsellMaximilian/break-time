@@ -1,6 +1,6 @@
-import { Client, Databases, Permission, Role, Account, ID  } from 'node-appwrite';
+import { Client, Databases, Permission, Role, Account, ID, Query  } from 'node-appwrite';
 
-export default async ({ req, res, log }) => {
+const func=  async ({ req, res, log }) => {
   const client = new Client()
      .setEndpoint('https://cloud.appwrite.io/v1')
      .setProject(process.env.APPWRITE_FUNCTION_PROJECT_ID)
@@ -12,6 +12,16 @@ export default async ({ req, res, log }) => {
   if(req.method === "POST"){
     try {
       const {name, username, email, password } = JSON.parse(req.body);
+
+        const foundProfiles = await databases.listDocuments(process.env.DB_ID, process.env.USER_PROFILE_COLLECTION_ID, [Query.equal("username", username)]);
+
+        if(foundProfiles.total > 0) {
+          return res.json({
+            success: false,
+            data: null,
+            note: "Username already exists."
+          })
+        }
 
       const id = ID.unique();
   
@@ -48,3 +58,5 @@ export default async ({ req, res, log }) => {
     return res.send("Failed")
   }
 };
+
+export default func;
