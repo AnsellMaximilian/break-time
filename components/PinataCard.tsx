@@ -7,7 +7,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { doesPinataAcceptContributions } from "@/utils/pinatas";
+import { doesPinataAcceptContributions, isPinataOpened } from "@/utils/pinatas";
 import { Button } from "./ui/button";
 import { FaTrash } from "react-icons/fa";
 import ConfirmDialog from "./ConfirmDialog";
@@ -48,9 +48,11 @@ export default function PinataCard({
           </Button>
 
           <div className="flex gap-2">
-            <Badge variant="destructive" className={cn()}>
-              Opened
-            </Badge>
+            {isPinataOpened(pinata) && (
+              <Badge variant="destructive" className={cn()}>
+                Opened
+              </Badge>
+            )}
             <Badge variant="default" className={cn()}>
               Contributions{" "}
               {doesPinataAcceptContributions(pinata) ? "Open" : "Closed"}
