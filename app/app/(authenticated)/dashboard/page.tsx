@@ -27,6 +27,9 @@ export default function DashboardPage() {
 
   const [pinatasLoading, setPinatasLoading] = useState(false);
 
+  const [othersPinatas, setOthersPinatas] = useState<Pinata[]>([]);
+  const [othersPinatasLoading, setOthersPinatasLoading] = useState(false);
+
   // Pinata Deletion
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletionMessage, setDeletionMessage] = useState("");
@@ -97,17 +100,38 @@ export default function DashboardPage() {
     (async () => {
       if (currentUser) {
         setPinatasLoading(true);
+        setOthersPinatasLoading(true);
         const pinatas = (
           await databases.listDocuments(
             config.dbId,
             config.pinataCollectionId,
-            [Query.equal("userId", currentUser.$id), Query.limit(10)]
+            [Query.equal("userId", currentUser.$id), Query.limit(100)]
           )
         ).documents as Pinata[];
 
         setPinatas(pinatas);
+        setPinatasLoading(false);
+
+        // other pinatas
+        const othersPinatas = (
+          await databases.listDocuments(
+            config.dbId,
+            config.pinataCollectionId,
+            [
+              Query.and([
+                Query.notEqual("userId", currentUser.$id),
+                Query.or([
+                  Query.contains("allowedContributorIds", currentUser.$id),
+                  Query.contains("allowedOpenerIds", currentUser.$id),
+                ]),
+              ]),
+              Query.limit(5),
+            ]
+          )
+        ).documents as Pinata[];
+        setOthersPinatas(othersPinatas);
+        setOthersPinatasLoading(false);
       }
-      setPinatasLoading(false);
     })();
   }, []);
 
@@ -153,10 +177,35 @@ export default function DashboardPage() {
                 ))}
           </div>
         </section>
-        <section className="col-span-6 border-border p-4 rounded-md shadow-sm border">
+        <section className="col-span-6 border-border p-4 rounded-md shadow-sm border bg-[#7B42B3] flex flex-col">
           <h2 className="font-semibold uppercase">People&apos;s Pinatas</h2>
+          {othersPinatas.length <= 0 ? (
+            <div className="mt-4 text-center grow flex items-center justify-center">
+              Here you'll see Pinatas you've been invited to either contribute
+              or open.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 mt-4">
+              {othersPinatas.map((p) => {
+                return (
+                  <Link
+                    href={`/app/pinatas/${p.$id}`}
+                    key={p.$id}
+                    className="text-white p-4 border-white border rounded-md cursor-pointer hover:bg-white hover:text-black"
+                  >
+                    <div className="font-semibold">{p.title}</div>
+                    <div className="flex">
+                      <div className="ml-auto text-xs">
+                        By {p.creatorUsername}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </section>
-        <section className="col-span-6 border-border p-4 rounded-md shadow-sm border space-y-8">
+        <section className="col-span-6 border-border p-4 rounded-md shadow-sm border space-y-8 bg-[#D34681]">
           <header className="flex justify-between items-center">
             <h2 className="font-semibold uppercase">Friends</h2>
             <span className="text-sm">

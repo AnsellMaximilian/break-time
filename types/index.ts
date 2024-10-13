@@ -43,6 +43,7 @@ export type Pinata = Models.Document & {
   isContributionPublic: boolean;
   thumbnailCid?: string;
   userId: string;
+  creatorUsername: string;
 };
 
 export type Contribution = Models.Document & {
