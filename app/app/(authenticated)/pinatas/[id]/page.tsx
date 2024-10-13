@@ -21,8 +21,10 @@ import { useToast } from "@/hooks/use-toast";
 import {
   canPinataBeOpened,
   doesPinataAcceptContributions,
+  doesPinataOpenAutomatically,
   getContributionTimeNode,
   getTotalOpeners,
+  isPinataOpened,
   isUserAllowedToContribute,
   isUserAllowedToOpen,
 } from "@/utils/pinatas";
@@ -32,6 +34,7 @@ import { truncateString, uniqueArray } from "@/utils/common";
 import { FaUser } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import OpenPinata from "@/components/OpenPinata";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -228,216 +231,229 @@ export default function PinataPage({
   return (
     <div className="grow">
       {pinata ? (
-        <div className="grid grid-cols-12 text-white rounded-md overflow-hidden">
-          <div className="col-span-12 lg:col-span-8 bg-[#1DB9D2] p-4 flex gap-8 row-start-2 lg:row-start-1 items-center">
-            <Image
-              src={thumbnailURL}
-              onError={() => setThumbnailURL(fallbackImg.src)}
-              width={250}
-              height={250}
-              alt="Pinata Thumbnail"
-              className="rounded-full border-white border-8"
-            />
-            <div className="">
-              <h1 className="text-3xl tracking-tight font-bold">
-                {pinata?.title}
-              </h1>
-              <p className="">
-                {pinata?.description
-                  ? pinata.description
-                  : "No description for this Pinata."}
-              </p>
-            </div>
-          </div>
-          <div className="col-span-12 lg:col-span-4 bg-[#FFDD00] p-4 text-black flex flex-col">
-            <h2 className="text-xl font-semibold">Open the Pinata</h2>
-            {pinata?.minimumOpenTime && (
+        isPinataOpened(pinata) ? (
+          <OpenPinata pinata={pinata} />
+        ) : (
+          <div className="grid grid-cols-12 text-white rounded-md overflow-hidden">
+            <div className="col-span-12 lg:col-span-8 bg-[#1DB9D2] p-4 flex gap-8 row-start-2 lg:row-start-1 items-center">
+              <Image
+                src={thumbnailURL}
+                onError={() => setThumbnailURL(fallbackImg.src)}
+                width={250}
+                height={250}
+                alt="Pinata Thumbnail"
+                className="rounded-full border-white border-8"
+              />
               <div className="">
-                <div className="text-right">
-                  <span className="text-sm">Openable at</span>{" "}
-                  <span className="text-xs font-bold">
-                    {format(
-                      new Date(pinata.minimumOpenTime),
-                      "MMMM do, yyyy 'at' h:mm a"
-                    )}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex justify-center">
-                  <CountDownTimer date={pinata.minimumOpenTime} />
-                </div>
+                <h1 className="text-3xl tracking-tight font-bold">
+                  {pinata?.title}
+                </h1>
+                <p className="">
+                  {pinata?.description
+                    ? pinata.description
+                    : "No description for this Pinata."}
+                </p>
               </div>
-            )}
-
-            <div className="mt-auto flex items-center">
-              <div>
-                <div className="">
-                  <span className="font-bold text-xl">
-                    {getTotalOpeners(pinata)}/
-                    {uniqueArray(pinata.allowedOpenerIds).length}
-                  </span>{" "}
-                  <span>Opened</span>
-                </div>
-                <div className="text-xs uppercase font-semibold bg-white px-2">
-                  {currentUser && pinata.openerIds.includes(currentUser.$id)
-                    ? "Waiting for others"
-                    : "Click to Open"}
-                </div>
-              </div>
-              <button
-                onClick={handleOpenPinata}
-                disabled={
-                  !canPinataBeOpened(pinata) ||
-                  !isUserAllowedToOpen(pinata, currentUser) ||
-                  isOpeningPinata
-                }
-                className="disabled:opacity-70 disabled:cursor-not-allowed w-24 h-24 shadow-md rounded-full bg-[#FD8900] text-white font-bold uppercase ml-auto text-xl hover:opacity-90"
-              >
-                Open
-              </button>
             </div>
-          </div>
-          <div className="col-span-12 bg-[#CE3F8F] p-4">
-            <h2 className="text-xl font-semibold">Friends and Contributors</h2>
-            <div className="mt-4 min-h-56">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {contributorsLoading
-                  ? Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-16 rounded-md" />
-                    ))
-                  : contributors.map((c) => {
-                      return (
-                        <div
-                          key={c.$id}
-                          className="relative overflow-hidden p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
-                        >
-                          {c.$id === pinata.userId && (
-                            <div className="absolute left-0 top-0 bg-white px-2 text-xs font-bold tracking-tighter text-black uppercase">
-                              Creator
-                            </div>
-                          )}
-                          <FaUser size={24} />
-                          <div className="grow">
-                            <div className="flex gap-2 justify-between items-center">
-                              <div className="">
-                                {truncateString(c.username, 10)}
+            <div className="col-span-12 lg:col-span-4 bg-[#FFDD00] p-4 text-black flex flex-col">
+              <h2 className="text-xl font-semibold">Open the Pinata</h2>
+              {pinata?.minimumOpenTime && (
+                <div className="">
+                  <div className="text-right">
+                    <span className="text-sm">
+                      {doesPinataOpenAutomatically(pinata)
+                        ? "Opens"
+                        : "Openable"}{" "}
+                      at
+                    </span>{" "}
+                    <span className="text-xs font-bold">
+                      {format(
+                        new Date(pinata.minimumOpenTime),
+                        "MMMM do, yyyy 'at' h:mm a"
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex justify-center">
+                    <CountDownTimer date={pinata.minimumOpenTime} />
+                  </div>
+                </div>
+              )}
+
+              {!doesPinataOpenAutomatically(pinata) && (
+                <div className="mt-auto flex items-center">
+                  <div>
+                    <div className="">
+                      <span className="font-bold text-xl">
+                        {getTotalOpeners(pinata)}/
+                        {uniqueArray(pinata.allowedOpenerIds).length}
+                      </span>{" "}
+                      <span>Opened</span>
+                    </div>
+                    <div className="text-xs uppercase font-semibold bg-white px-2">
+                      {currentUser && pinata.openerIds.includes(currentUser.$id)
+                        ? "Waiting for others"
+                        : "Click to Open"}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleOpenPinata}
+                    disabled={
+                      !canPinataBeOpened(pinata) ||
+                      !isUserAllowedToOpen(pinata, currentUser) ||
+                      isOpeningPinata
+                    }
+                    className="disabled:opacity-70 disabled:cursor-not-allowed w-24 h-24 shadow-md rounded-full bg-[#FD8900] text-white font-bold uppercase ml-auto text-xl hover:opacity-90"
+                  >
+                    Open
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="col-span-12 bg-[#CE3F8F] p-4">
+              <h2 className="text-xl font-semibold">
+                Friends and Contributors
+              </h2>
+              <div className="mt-4 min-h-56">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {contributorsLoading
+                    ? Array.from({ length: 5 }).map((_, i) => (
+                        <Skeleton key={i} className="h-16 rounded-md" />
+                      ))
+                    : contributors.map((c) => {
+                        return (
+                          <div
+                            key={c.$id}
+                            className="relative overflow-hidden p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
+                          >
+                            {c.$id === pinata.userId && (
+                              <div className="absolute left-0 top-0 bg-white px-2 text-xs font-bold tracking-tighter text-black uppercase">
+                                Creator
                               </div>
-                              <div>
-                                <div className="flex gap-2 justify-end">
-                                  {pinata.allowedOpenerIds.includes(c.$id) && (
-                                    <Badge>Opener</Badge>
-                                  )}
-                                  {pinata.allowedContributorIds.includes(
-                                    c.$id
-                                  ) && <Badge>Contributor</Badge>}
+                            )}
+                            <FaUser size={24} />
+                            <div className="grow">
+                              <div className="flex gap-2 justify-between items-center">
+                                <div className="">
+                                  {truncateString(c.username, 10)}
                                 </div>
-                                <div className="flex">
-                                  <div className="ml-auto mt-4 text-xs">
-                                    Contributions:{" "}
-                                    {
-                                      contributions.filter(
-                                        (cb) => cb.userId === c.$id
-                                      ).length
-                                    }
+                                <div>
+                                  <div className="flex gap-2 justify-end">
+                                    {pinata.allowedOpenerIds.includes(
+                                      c.$id
+                                    ) && <Badge>Opener</Badge>}
+                                    {pinata.allowedContributorIds.includes(
+                                      c.$id
+                                    ) && <Badge>Contributor</Badge>}
+                                  </div>
+                                  <div className="flex">
+                                    <div className="ml-auto mt-4 text-xs">
+                                      Contributions:{" "}
+                                      {
+                                        contributions.filter(
+                                          (cb) => cb.userId === c.$id
+                                        ).length
+                                      }
+                                    </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-              </div>
-            </div>
-          </div>
-          <div className="col-span-12 bg-[#6D3AC6] p-4 space-y-4">
-            <div className="flex justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  Files and Contributions
-                </h2>
-                <div className="text-sm">
-                  {getContributionTimeNode(pinata)}
-                  {!doesPinataAcceptContributions(pinata) &&
-                    `. This Pinata is currently not accepting contrubitons.`}
+                        );
+                      })}
                 </div>
               </div>
-              <Button
-                disabled={
-                  !isUserAllowedToContribute(pinata, currentUser) ||
-                  !doesPinataAcceptContributions(pinata)
-                }
-                onClick={() => fileInputRef.current?.click()}
-                className="flex gap-2"
-              >
-                <span>Upload</span> <UploadCloud />
-              </Button>
             </div>
-            <div
-              className=" min-h-56 border-white flex flex-col"
-              {...getRootProps({
-                onClick: (event) => {
-                  event.stopPropagation();
-                },
-              })}
-            >
-              {contributions.length > 0 ? (
-                <div className="space-y-4">
-                  <div>
-                    These are your files. You can access them after the Pinata
-                    has been opened
+            <div className="col-span-12 bg-[#6D3AC6] p-4 space-y-4">
+              <div className="flex justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    Files and Contributions
+                  </h2>
+                  <div className="text-sm">
+                    {getContributionTimeNode(pinata)}
+                    {!doesPinataAcceptContributions(pinata) &&
+                      `. This Pinata is currently not accepting contrubitons.`}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {contributionsLoading
-                      ? Array.from({ length: 5 }).map((_, i) => (
-                          <Skeleton key={i} className="h-16 rounded-md" />
-                        ))
-                      : contributions.map((c) => {
-                          const Icon =
-                            fileTypeIcons[c.fileType] ?? UnknownFileIcon;
-                          return (
-                            <div
-                              key={c.$id}
-                              className="p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
-                            >
-                              <Icon size={24} />{" "}
-                              <div className="text-xs">{c.title}</div>
-                            </div>
-                          );
-                        })}
-                    {isDragActive && (
-                      <div className="p-4 border border-white rounded-md flex gap-4 items-center bg-white text-black cursor-pointer">
-                        <UnknownFileIcon size={24} />{" "}
-                        <div className="text-xs">New File</div>
-                      </div>
+                </div>
+                <Button
+                  disabled={
+                    !isUserAllowedToContribute(pinata, currentUser) ||
+                    !doesPinataAcceptContributions(pinata)
+                  }
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex gap-2"
+                >
+                  <span>Upload</span> <UploadCloud />
+                </Button>
+              </div>
+              <div
+                className=" min-h-56 border-white flex flex-col"
+                {...getRootProps({
+                  onClick: (event) => {
+                    event.stopPropagation();
+                  },
+                })}
+              >
+                {contributions.length > 0 ? (
+                  <div className="space-y-4">
+                    <div>
+                      These are your files. You can access them after the Pinata
+                      has been opened
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {contributionsLoading
+                        ? Array.from({ length: 5 }).map((_, i) => (
+                            <Skeleton key={i} className="h-16 rounded-md" />
+                          ))
+                        : contributions.map((c) => {
+                            const Icon =
+                              fileTypeIcons[c.fileType] ?? UnknownFileIcon;
+                            return (
+                              <div
+                                key={c.$id}
+                                className="p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
+                              >
+                                <Icon size={24} />{" "}
+                                <div className="text-xs">{c.title}</div>
+                              </div>
+                            );
+                          })}
+                      {isDragActive && (
+                        <div className="p-4 border border-white rounded-md flex gap-4 items-center bg-white text-black cursor-pointer">
+                          <UnknownFileIcon size={24} />{" "}
+                          <div className="text-xs">New File</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center flex-col justify-center gap-2 grow border-white border rounded-md">
+                    <Upload size={44} />
+
+                    {isDragActive ? (
+                      <p>Drop your files here...</p>
+                    ) : (
+                      <p>
+                        Drag and drop your file contribution(s) here, or click
+                        to select files
+                      </p>
                     )}
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-center flex-col justify-center gap-2 grow border-white border rounded-md">
-                  <Upload size={44} />
+                )}
 
-                  {isDragActive ? (
-                    <p>Drop your files here...</p>
-                  ) : (
-                    <p>
-                      Drag and drop your file contribution(s) here, or click to
-                      select files
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <input {...getInputProps()} ref={fileInputRef} />
+                <input {...getInputProps()} ref={fileInputRef} />
+              </div>
             </div>
+            <UploadDialog
+              open={uploadDialogOpen}
+              currentProgress={currentUploadProgress}
+              maxProgress={maxUploadProgress}
+              message={uploadMessage}
+            />
           </div>
-          <UploadDialog
-            open={uploadDialogOpen}
-            currentProgress={currentUploadProgress}
-            maxProgress={maxUploadProgress}
-            message={uploadMessage}
-          />
-        </div>
+        )
       ) : (
         <div className="flex justify-center h-full overflow-hidden">
           <Image

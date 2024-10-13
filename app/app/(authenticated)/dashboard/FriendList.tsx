@@ -24,7 +24,7 @@ export default function FriendList({
 
   useEffect(() => {
     (async () => {
-      if (currentUser?.profile) {
+      if (currentUser?.profile && currentUser.profile.friendIds.length > 0) {
         const friendsRes = await databases.listDocuments(
           config.dbId,
           config.userProfileCollectionId,

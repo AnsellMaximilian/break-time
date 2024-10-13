@@ -167,12 +167,12 @@ export default function CreatePinataPage() {
           contributeEnd: contributeEnd ? contributeStart : null,
           minimumOpenTime: minimumOpenTime ? contributeStart : null,
           allowedContributorIds,
-          allowedOpenerIds,
+          allowedOpenerIds: doesOpenAutomatically ? [] : allowedOpenerIds,
           userId: currentUser.$id,
         },
         [
           Permission.read(Role.any()),
-          Permission.update(Role.user(currentUser.$id)),
+          Permission.update(Role.any()),
           Permission.delete(Role.user(currentUser.$id)),
         ]
       );

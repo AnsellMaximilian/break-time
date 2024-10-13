@@ -1,5 +1,5 @@
 import { Pinata, User } from "@/types";
-import { hasDatePassed } from "./common";
+import { hasDatePassed, uniqueArray } from "./common";
 import { format } from "date-fns";
 
 export const isUserAllowedToContribute = (
@@ -74,4 +74,16 @@ export const getTotalOpeners = (pinata: Pinata) => {
   );
 
   return openers.length;
+};
+
+export const doesPinataOpenAutomatically = (pinata: Pinata) => {
+  return !!pinata.minimumOpenTime && pinata.allowedOpenerIds.length <= 0;
+};
+
+export const isPinataOpened = (pinata: Pinata) => {
+  return (
+    uniqueArray(pinata.openerIds).length >=
+      uniqueArray(pinata.allowedOpenerIds).length &&
+    (!!!pinata.minimumOpenTime || hasDatePassed(pinata.minimumOpenTime))
+  );
 };
