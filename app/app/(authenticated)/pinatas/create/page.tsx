@@ -169,6 +169,7 @@ export default function CreatePinataPage() {
           allowedContributorIds,
           allowedOpenerIds: doesOpenAutomatically ? [] : allowedOpenerIds,
           userId: currentUser.$id,
+          creatorUsername: currentUser.profile.username,
         },
         [
           Permission.read(Role.any()),
