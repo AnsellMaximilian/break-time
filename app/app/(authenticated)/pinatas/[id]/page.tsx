@@ -63,69 +63,83 @@ export default function PinataPage({
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      if (!pinata || !currentUser) return;
+      const formData = new FormData();
+      acceptedFiles.forEach((file) => {
+        formData.append("file", file);
+      });
 
-      if (!doesPinataAcceptContributions(pinata)) {
-        toast({
-          variant: "destructive",
-          description: "This Pinata is currently not accepting contrubitons.",
-          title: "Contribution Failed",
-        });
-        return;
-      }
+      const response = await fetch("/api/scan-files", {
+        method: "POST",
+        body: formData, // FormData object containing the files
+      });
 
-      if (!isUserAllowedToContribute(pinata, currentUser)) {
-        toast({
-          variant: "destructive",
-          description: "You are not allowed to contribute to this Pinata.",
-          title: "Contribution Failed",
-        });
-        return;
-      }
-      try {
-        setUploadDialogOpen(true);
-        setCurrentUploadProgress(0);
-        setMaxUploadProgress(acceptedFiles.length * 3);
-        const uploadRes = await Promise.all(
-          acceptedFiles.map(async (file) => {
-            const keyRequest = await fetch("/api/key");
-            setUploadMessage(`Received key for ${file.name}`);
+      const data = await response.json();
 
-            setCurrentUploadProgress((prev) => prev + 1);
-            const keyData = await keyRequest.json();
-            const upload = await pnt.upload.file(file).key(keyData.JWT);
-            setUploadMessage(`Uploaded file ${file.name}`);
-            setCurrentUploadProgress((prev) => prev + 1);
+      console.log(data);
 
-            const metadata = (await databases.createDocument(
-              config.dbId,
-              config.contributionCollectionId,
-              ID.unique(),
-              {
-                pinataId,
-                cid: upload.cid,
-                fileType: file.type,
-                title: file.name,
-                userId: currentUser.$id,
-                fileId: upload.id,
-              },
-              [
-                Permission.read(Role.any()),
-                Permission.delete(Role.user(currentUser.$id)),
-              ]
-            )) as Contribution;
-            setUploadMessage(`Uploaded metadata for ${file.name}`);
+      // if (!pinata || !currentUser) return;
 
-            setCurrentUploadProgress((prev) => prev + 1);
+      // if (!doesPinataAcceptContributions(pinata)) {
+      //   toast({
+      //     variant: "destructive",
+      //     description: "This Pinata is currently not accepting contrubitons.",
+      //     title: "Contribution Failed",
+      //   });
+      //   return;
+      // }
 
-            return metadata;
-          })
-        );
-        setContributions((prev) => [...prev, ...uploadRes]);
-      } catch (error) {
-      } finally {
-        setUploadDialogOpen(false);
-      }
+      // if (!isUserAllowedToContribute(pinata, currentUser)) {
+      //   toast({
+      //     variant: "destructive",
+      //     description: "You are not allowed to contribute to this Pinata.",
+      //     title: "Contribution Failed",
+      //   });
+      //   return;
+      // }
+      // try {
+      //   setUploadDialogOpen(true);
+      //   setCurrentUploadProgress(0);
+      //   setMaxUploadProgress(acceptedFiles.length * 3);
+      //   const uploadRes = await Promise.all(
+      //     acceptedFiles.map(async (file) => {
+      //       const keyRequest = await fetch("/api/key");
+      //       setUploadMessage(`Received key for ${file.name}`);
+
+      //       setCurrentUploadProgress((prev) => prev + 1);
+      //       const keyData = await keyRequest.json();
+      //       const upload = await pnt.upload.file(file).key(keyData.JWT);
+      //       setUploadMessage(`Uploaded file ${file.name}`);
+      //       setCurrentUploadProgress((prev) => prev + 1);
+
+      //       const metadata = (await databases.createDocument(
+      //         config.dbId,
+      //         config.contributionCollectionId,
+      //         ID.unique(),
+      //         {
+      //           pinataId,
+      //           cid: upload.cid,
+      //           fileType: file.type,
+      //           title: file.name,
+      //           userId: currentUser.$id,
+      //           fileId: upload.id,
+      //         },
+      //         [
+      //           Permission.read(Role.any()),
+      //           Permission.delete(Role.user(currentUser.$id)),
+      //         ]
+      //       )) as Contribution;
+      //       setUploadMessage(`Uploaded metadata for ${file.name}`);
+
+      //       setCurrentUploadProgress((prev) => prev + 1);
+
+      //       return metadata;
+      //     })
+      //   );
+      //   setContributions((prev) => [...prev, ...uploadRes]);
+      // } catch (error) {
+      // } finally {
+      //   setUploadDialogOpen(false);
+      // }
     },
     [pinata, currentUser]
   );
