@@ -2,7 +2,7 @@
 
 import UploadDialog from "@/components/UploadDialog";
 import { client, config, databases } from "@/lib/appwrite";
-import { Contribution, Pinata } from "@/types";
+import { Contribution, Pinata, UserProfile } from "@/types";
 import { Upload, UploadCloud } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -28,7 +28,9 @@ import {
 } from "@/utils/pinatas";
 import { useUser } from "@/contexts/user/UserContext";
 import { unsubscribe } from "diagnostics_channel";
-import { uniqueArray } from "@/utils/common";
+import { truncateString, uniqueArray } from "@/utils/common";
+import { FaUser } from "react-icons/fa";
+import { Badge } from "@/components/ui/badge";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -45,8 +47,10 @@ export default function PinataPage({
 
   const [isOpeningPinata, setIsOpeningPinata] = useState(false);
 
-  const [contributionsLoading, setContributionsLoading] = useState(false);
+  const [contributionsLoading, setContributionsLoading] = useState(true);
+  const [contributorsLoading, setContributorsLoading] = useState(true);
   const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [contributors, setContributors] = useState<UserProfile[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -156,6 +160,8 @@ export default function PinataPage({
 
   useEffect(() => {
     (async () => {
+      setContributionsLoading(true);
+      setContributorsLoading(true);
       const pinata = (await databases.getDocument(
         config.dbId,
         config.pinataCollectionId,
@@ -176,8 +182,25 @@ export default function PinataPage({
           [Query.equal("pinataId", pinataId), Query.limit(100)]
         )
       ).documents as Contribution[];
-
+      setContributionsLoading(false);
       setContributions(contributions);
+
+      const contributors = (
+        await databases.listDocuments(
+          config.dbId,
+          config.userProfileCollectionId,
+          [
+            Query.equal("$id", [
+              ...pinata.allowedContributorIds,
+              ...pinata.allowedOpenerIds,
+            ]),
+            Query.limit(100),
+          ]
+        )
+      ).documents as UserProfile[];
+
+      setContributors(contributors);
+      setContributorsLoading(false);
     })();
   }, [pinataId]);
 
@@ -255,6 +278,62 @@ export default function PinataPage({
           </div>
           <div className="col-span-12 bg-[#CE3F8F] p-4">
             <h2 className="text-xl font-semibold">Friends and Contributors</h2>
+            <div className="mt-4 min-h-56">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {contributorsLoading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-16 rounded-md" />
+                    ))
+                  : contributors.map((c) => {
+                      return (
+                        <div
+                          key={c.$id}
+                          className="relative overflow-hidden p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
+                        >
+                          {c.$id === pinata.userId && (
+                            <div className="absolute left-0 top-0 bg-white px-2 text-xs font-bold tracking-tighter text-black uppercase">
+                              Creator
+                            </div>
+                          )}
+                          <FaUser size={24} />
+                          <div className="grow">
+                            <div className="flex gap-2 justify-between items-center">
+                              <div className="">
+                                {truncateString(c.username, 10)}
+                              </div>
+                              <div>
+                                <div className="flex gap-2 justify-end">
+                                  {pinata.allowedOpenerIds.includes(c.$id) && (
+                                    <Badge>Opener</Badge>
+                                  )}
+                                  {pinata.allowedContributorIds.includes(
+                                    c.$id
+                                  ) && <Badge>Contributor</Badge>}
+                                </div>
+                                <div className="flex">
+                                  <div className="ml-auto mt-4 text-xs">
+                                    Contributions:{" "}
+                                    {
+                                      contributions.filter(
+                                        (cb) => cb.userId === c.$id
+                                      ).length
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                {isDragActive && (
+                  <div className="p-4 border border-white rounded-md flex gap-4 items-center bg-white text-black cursor-pointer">
+                    <UnknownFileIcon size={24} />{" "}
+                    <div className="text-xs">New File</div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <div className="col-span-12 bg-[#6D3AC6] p-4 space-y-4">
             <div className="flex justify-between gap-4">
@@ -284,31 +363,30 @@ export default function PinataPage({
                 },
               })}
             >
-              {contributionsLoading ? (
-                <div className="grid grid-cols-3 gap-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-16 rounded-md" />
-                  ))}
-                </div>
-              ) : contributions.length > 0 ? (
+              {contributions.length > 0 ? (
                 <div className="space-y-4">
                   <div>
                     These are your files. You can access them after the Pinata
                     has been opened
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    {contributions.map((c) => {
-                      const Icon = fileTypeIcons[c.fileType] ?? UnknownFileIcon;
-                      return (
-                        <div
-                          key={c.$id}
-                          className="p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
-                        >
-                          <Icon size={24} />{" "}
-                          <div className="text-xs">{c.title}</div>
-                        </div>
-                      );
-                    })}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {contributionsLoading
+                      ? Array.from({ length: 5 }).map((_, i) => (
+                          <Skeleton key={i} className="h-16 rounded-md" />
+                        ))
+                      : contributions.map((c) => {
+                          const Icon =
+                            fileTypeIcons[c.fileType] ?? UnknownFileIcon;
+                          return (
+                            <div
+                              key={c.$id}
+                              className="p-4 border border-white rounded-md flex gap-4 items-center hover:bg-white hover:text-black cursor-pointer"
+                            >
+                              <Icon size={24} />{" "}
+                              <div className="text-xs">{c.title}</div>
+                            </div>
+                          );
+                        })}
                     {isDragActive && (
                       <div className="p-4 border border-white rounded-md flex gap-4 items-center bg-white text-black cursor-pointer">
                         <UnknownFileIcon size={24} />{" "}
