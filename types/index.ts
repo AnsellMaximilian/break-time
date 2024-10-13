@@ -49,4 +49,5 @@ export type Contribution = Models.Document & {
   fileType: string;
   pinataId: string;
   userId: string;
+  fileId: string;
 };

@@ -163,9 +163,9 @@ export default function CreatePinataPage() {
           title: values.title,
           description: values.description,
           thumbnailCid: thumbnailCid,
-          contributeStart: contributeStart ?? null,
-          contributeEnd: contributeEnd ?? null,
-          minimumOpenTime: minimumOpenTime ?? null,
+          contributeStart: contributeStart ? contributeStart : null,
+          contributeEnd: contributeEnd ? contributeStart : null,
+          minimumOpenTime: minimumOpenTime ? contributeStart : null,
           allowedContributorIds,
           allowedOpenerIds,
           userId: currentUser.$id,
@@ -173,6 +173,7 @@ export default function CreatePinataPage() {
         [
           Permission.read(Role.any()),
           Permission.update(Role.user(currentUser.$id)),
+          Permission.delete(Role.user(currentUser.$id)),
         ]
       );
       toast({

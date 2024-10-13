@@ -7,7 +7,7 @@ import { Upload, UploadCloud } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { pinata as pnt } from "@/lib/pinata";
-import { ID, Query } from "appwrite";
+import { ID, Permission, Query, Role } from "appwrite";
 import { fileTypeIcons, UnknownFileIcon } from "@/const/fileTypes";
 import { getFileUrl } from "@/utils/files";
 import Image from "next/image";
@@ -102,7 +102,12 @@ export default function PinataPage({
                 fileType: file.type,
                 title: file.name,
                 userId: currentUser.$id,
-              }
+                fileId: upload.id,
+              },
+              [
+                Permission.read(Role.any()),
+                Permission.delete(Role.user(currentUser.$id)),
+              ]
             )) as Contribution;
             setUploadMessage(`Uploaded metadata for ${file.name}`);
 
@@ -185,21 +190,26 @@ export default function PinataPage({
       setContributionsLoading(false);
       setContributions(contributions);
 
-      const contributors = (
-        await databases.listDocuments(
-          config.dbId,
-          config.userProfileCollectionId,
-          [
-            Query.equal("$id", [
-              ...pinata.allowedContributorIds,
-              ...pinata.allowedOpenerIds,
-            ]),
-            Query.limit(100),
-          ]
-        )
-      ).documents as UserProfile[];
+      if (
+        pinata.allowedContributorIds.length + pinata.allowedOpenerIds.length >
+        0
+      ) {
+        const contributors = (
+          await databases.listDocuments(
+            config.dbId,
+            config.userProfileCollectionId,
+            [
+              Query.equal("$id", [
+                ...pinata.allowedContributorIds,
+                ...pinata.allowedOpenerIds,
+              ]),
+              Query.limit(100),
+            ]
+          )
+        ).documents as UserProfile[];
 
-      setContributors(contributors);
+        setContributors(contributors);
+      }
       setContributorsLoading(false);
     })();
   }, [pinataId]);
@@ -326,12 +336,6 @@ export default function PinataPage({
                         </div>
                       );
                     })}
-                {isDragActive && (
-                  <div className="p-4 border border-white rounded-md flex gap-4 items-center bg-white text-black cursor-pointer">
-                    <UnknownFileIcon size={24} />{" "}
-                    <div className="text-xs">New File</div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -348,7 +352,10 @@ export default function PinataPage({
                 </div>
               </div>
               <Button
-                disabled={!isUserAllowedToContribute(pinata, currentUser)}
+                disabled={
+                  !isUserAllowedToContribute(pinata, currentUser) ||
+                  !doesPinataAcceptContributions(pinata)
+                }
                 onClick={() => fileInputRef.current?.click()}
                 className="flex gap-2"
               >
