@@ -18,10 +18,14 @@ interface UploadDialogProps {
   open: boolean;
   onOpenChange?: (open: boolean) => void;
   message?: string;
+  title?: string;
+  description?: string;
 }
 
 export default function UploadDialog({
   maxProgress,
+  title,
+  description,
   currentProgress,
   className,
   onOpenChange,
@@ -32,9 +36,11 @@ export default function UploadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Uploading Files</DialogTitle>
+          <DialogTitle>{title ? title : "Uploading Files"}</DialogTitle>
           <DialogDescription>
-            Uploading your contributions. Please be patient.
+            {description
+              ? description
+              : "Uploading your contributions. Please be patient."}
           </DialogDescription>
         </DialogHeader>
         <div>

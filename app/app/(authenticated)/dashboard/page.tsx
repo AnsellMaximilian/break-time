@@ -166,6 +166,8 @@ export default function DashboardPage() {
         }}
       />
       <UploadDialog
+        title="Deleting Pinata"
+        description="Deleting Pinata and it's contributions"
         currentProgress={currentDeleteProgress}
         maxProgress={4}
         open={isDeleting}
