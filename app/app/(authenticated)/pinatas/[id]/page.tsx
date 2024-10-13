@@ -8,7 +8,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { pinata as pnt } from "@/lib/pinata";
 import { ID, Permission, Query, Role } from "appwrite";
-import { fileTypeIcons, UnknownFileIcon } from "@/const/fileTypes";
+import {
+  fileTypeIcons,
+  openableFileTypes,
+  UnknownFileIcon,
+} from "@/const/fileTypes";
 import { getFileUrl } from "@/utils/files";
 import Image from "next/image";
 import fallbackImg from "@/assets/break-time-square.png";
@@ -63,83 +67,83 @@ export default function PinataPage({
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      const formData = new FormData();
-      acceptedFiles.forEach((file) => {
-        formData.append("file", file);
-      });
+      // const formData = new FormData();
+      // acceptedFiles.forEach((file) => {
+      //   formData.append("file", file);
+      // });
 
-      const response = await fetch("/api/scan-files", {
-        method: "POST",
-        body: formData, // FormData object containing the files
-      });
+      // const response = await fetch("/api/scan-files", {
+      //   method: "POST",
+      //   body: formData, // FormData object containing the files
+      // });
 
-      const data = await response.json();
+      // const data = await response.json();
 
-      console.log(data);
+      // console.log(data);
 
-      // if (!pinata || !currentUser) return;
+      if (!pinata || !currentUser) return;
 
-      // if (!doesPinataAcceptContributions(pinata)) {
-      //   toast({
-      //     variant: "destructive",
-      //     description: "This Pinata is currently not accepting contrubitons.",
-      //     title: "Contribution Failed",
-      //   });
-      //   return;
-      // }
+      if (!doesPinataAcceptContributions(pinata)) {
+        toast({
+          variant: "destructive",
+          description: "This Pinata is currently not accepting contrubitons.",
+          title: "Contribution Failed",
+        });
+        return;
+      }
 
-      // if (!isUserAllowedToContribute(pinata, currentUser)) {
-      //   toast({
-      //     variant: "destructive",
-      //     description: "You are not allowed to contribute to this Pinata.",
-      //     title: "Contribution Failed",
-      //   });
-      //   return;
-      // }
-      // try {
-      //   setUploadDialogOpen(true);
-      //   setCurrentUploadProgress(0);
-      //   setMaxUploadProgress(acceptedFiles.length * 3);
-      //   const uploadRes = await Promise.all(
-      //     acceptedFiles.map(async (file) => {
-      //       const keyRequest = await fetch("/api/key");
-      //       setUploadMessage(`Received key for ${file.name}`);
+      if (!isUserAllowedToContribute(pinata, currentUser)) {
+        toast({
+          variant: "destructive",
+          description: "You are not allowed to contribute to this Pinata.",
+          title: "Contribution Failed",
+        });
+        return;
+      }
+      try {
+        setUploadDialogOpen(true);
+        setCurrentUploadProgress(0);
+        setMaxUploadProgress(acceptedFiles.length * 3);
+        const uploadRes = await Promise.all(
+          acceptedFiles.map(async (file) => {
+            const keyRequest = await fetch("/api/key");
+            setUploadMessage(`Received key for ${file.name}`);
 
-      //       setCurrentUploadProgress((prev) => prev + 1);
-      //       const keyData = await keyRequest.json();
-      //       const upload = await pnt.upload.file(file).key(keyData.JWT);
-      //       setUploadMessage(`Uploaded file ${file.name}`);
-      //       setCurrentUploadProgress((prev) => prev + 1);
+            setCurrentUploadProgress((prev) => prev + 1);
+            const keyData = await keyRequest.json();
+            const upload = await pnt.upload.file(file).key(keyData.JWT);
+            setUploadMessage(`Uploaded file ${file.name}`);
+            setCurrentUploadProgress((prev) => prev + 1);
 
-      //       const metadata = (await databases.createDocument(
-      //         config.dbId,
-      //         config.contributionCollectionId,
-      //         ID.unique(),
-      //         {
-      //           pinataId,
-      //           cid: upload.cid,
-      //           fileType: file.type,
-      //           title: file.name,
-      //           userId: currentUser.$id,
-      //           fileId: upload.id,
-      //         },
-      //         [
-      //           Permission.read(Role.any()),
-      //           Permission.delete(Role.user(currentUser.$id)),
-      //         ]
-      //       )) as Contribution;
-      //       setUploadMessage(`Uploaded metadata for ${file.name}`);
+            const metadata = (await databases.createDocument(
+              config.dbId,
+              config.contributionCollectionId,
+              ID.unique(),
+              {
+                pinataId,
+                cid: upload.cid,
+                fileType: file.type,
+                title: file.name,
+                userId: currentUser.$id,
+                fileId: upload.id,
+              },
+              [
+                Permission.read(Role.any()),
+                Permission.delete(Role.user(currentUser.$id)),
+              ]
+            )) as Contribution;
+            setUploadMessage(`Uploaded metadata for ${file.name}`);
 
-      //       setCurrentUploadProgress((prev) => prev + 1);
+            setCurrentUploadProgress((prev) => prev + 1);
 
-      //       return metadata;
-      //     })
-      //   );
-      //   setContributions((prev) => [...prev, ...uploadRes]);
-      // } catch (error) {
-      // } finally {
-      //   setUploadDialogOpen(false);
-      // }
+            return metadata;
+          })
+        );
+        setContributions((prev) => [...prev, ...uploadRes]);
+      } catch (error) {
+      } finally {
+        setUploadDialogOpen(false);
+      }
     },
     [pinata, currentUser]
   );
@@ -457,7 +461,11 @@ export default function PinataPage({
                   </div>
                 )}
 
-                <input {...getInputProps()} ref={fileInputRef} />
+                <input
+                  {...getInputProps()}
+                  ref={fileInputRef}
+                  accept={openableFileTypes.join(", ")}
+                />
               </div>
             </div>
             <UploadDialog

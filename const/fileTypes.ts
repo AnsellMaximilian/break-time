@@ -37,3 +37,35 @@ export const fileTypeIcons: Record<string, IconType> = {
   "application/octet-stream": FaFileAlt, // Binary or unknown file type
 };
 export const UnknownFileIcon = FaFile;
+
+export const openableFileTypes = [
+  // Images
+  "image/svg+xml", // SVG
+  "image/png", // PNG
+  "image/jpeg", // JPEG
+  "image/gif", // GIF
+  "image/webp", // WEBP
+
+  // Text and Document Formats
+  "text/plain", // TXT
+  "text/html", // HTML
+  "text/css", // CSS
+  "text/markdown", // MD (if supported)
+  "application/pdf", // PDF
+
+  // Audio Formats
+  "audio/mpeg", // MP3
+  "audio/wav", // WAV
+  "audio/ogg", // OGG
+  "audio/aac", // AAC
+
+  // Video Formats
+  "video/mp4", // MP4
+  "video/webm", // WEBM
+  "video/ogg", // OGG
+
+  // Other File Formats
+  "application/json", // JSON
+  "application/xml", // XML
+  "text/csv", // CSV
+];

@@ -4,6 +4,7 @@ import {
   PangeaConfig,
   PangeaResponse,
   FileScan,
+  FileData,
 } from "pangea-node-sdk";
 import formidable from "formidable";
 
@@ -23,25 +24,13 @@ const client = new FileScanService(
   pangeaConfig
 );
 
-const parseForm = async (
-  req: Request
-): Promise<{ files: formidable.Files }> => {
-  const form = formidable({ multiples: true });
-
-  return new Promise((resolve, reject) => {
-    form.parse(req as any, (err, fields, files) => {
-      if (err) reject(err);
-      resolve({ files });
-    });
-  });
-};
-
 export async function POST(req: NextRequest) {
-  const { files } = await parseForm(req);
+  const formData = await req.formData();
 
-  console.log({ files });
+  const files = formData.getAll("file");
+  console.log({ files, types: files[0] instanceof File });
 
-  if (!files || !Array.isArray(files.file)) {
+  if (files.length === 0) {
     return NextResponse.json({
       note: "No files provided or invalid format",
       success: false,
@@ -49,19 +38,44 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  //   return NextResponse.json({});
+
   try {
     const scanResults: InstanceType<
       typeof PangeaResponse<FileScan.ScanResult>
     >[] = [];
-    for (const file of files.file) {
-      const request = { verbose: true, raw: true, provider: "crowdstrike" }; // Modify request parameters as needed
-      const response = await client.fileScan(request, file.filepath);
 
-      scanResults.push(response);
+    let hasInvalidFormat = false;
+    for (const file of files) {
+      if (file instanceof File) {
+        const arrayBuffer = await file.arrayBuffer();
+
+        const fileData: FileData = {
+          file: Buffer.from(arrayBuffer),
+          name: file.name,
+        };
+
+        const request = { verbose: true, raw: true, provider: "crowdstrike" }; // Modify request parameters as needed
+        const response = await client.fileScan(request, fileData);
+
+        scanResults.push(response);
+      } else {
+        hasInvalidFormat;
+        break;
+      }
+    }
+
+    if (hasInvalidFormat) {
+      return NextResponse.json({
+        note: "One of the files was not a File",
+        success: false,
+        data: null,
+      });
     }
 
     return NextResponse.json({ success: true, data: scanResults });
   } catch (error) {
+    console.log(error);
     return NextResponse.json({
       success: false,
       data: null,
