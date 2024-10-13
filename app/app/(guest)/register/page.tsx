@@ -32,6 +32,8 @@ import publicRoute from "@/hooks/publicRoute";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import errorMap from "zod/locales/en.js";
+import { ApiResponse } from "@/types";
 
 const formSchema = z.object({
   name: z.string().min(2).max(100),
@@ -55,6 +57,9 @@ function RegisterPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    let errorMsg = "Something went wrong.";
+    let hasError = false;
+
     try {
       const { name, username, email, password } = values;
 
@@ -75,19 +80,24 @@ function RegisterPage() {
         ExecutionMethod.POST
       );
 
-      console.log(res);
+      const resJSON = JSON.parse(res.responseBody) as ApiResponse<null>;
 
-      if (!res.errors) {
+      if (resJSON.success) {
         router.push("/app/profile");
       } else {
+        errorMsg = res.errors ? res.errors : resJSON.note;
+        hasError = true;
+      }
+    } catch (error) {
+      if (error instanceof Error) errorMsg = error.message;
+      hasError = true;
+    } finally {
+      if (hasError)
         toast({
           title: "Registration Failed",
           variant: "destructive",
-          description: res.errors,
+          description: errorMsg,
         });
-      }
-    } catch (error) {
-    } finally {
       setIsLoading(false);
     }
   }
