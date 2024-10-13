@@ -17,12 +17,16 @@ import CountDownTimer from "@/components/CountDownTimer";
 import loadingLogo from "@/assets/breaktime-logo.svg";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { isUserAllowedToContribute } from "@/utils/pinatas";
+import { useUser } from "@/contexts/user/UserContext";
 
 export default function PinataPage({
   params: { id: pinataId },
 }: {
   params: { id: string };
 }) {
+  const { currentUser } = useUser();
   const [pinata, setPinata] = useState<Pinata | null>(null);
   const [thumbnailURL, setThumbnailURL] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -35,10 +39,20 @@ export default function PinataPage({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { toast } = useToast();
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (!pinata || !currentUser) return;
+
+    if (!isUserAllowedToContribute(pinata, currentUser)) {
+      toast({
+        variant: "destructive",
+        description: "You are not allowed to contribute to this Pinata.",
+        title: "Contribution Failed",
+      });
+      return;
+    }
     try {
-      // console.log(acceptedFiles);
-      // return;
       setUploadDialogOpen(true);
       setCurrentUploadProgress(0);
       setMaxUploadProgress(acceptedFiles.length * 3);
@@ -165,6 +179,7 @@ export default function PinataPage({
             <div className="flex justify-between gap-4">
               <h2 className="text-xl font-semibold">Files and Contributions</h2>
               <Button
+                disabled={!isUserAllowedToContribute(pinata, currentUser)}
                 onClick={() => fileInputRef.current?.click()}
                 className="flex gap-2"
               >
