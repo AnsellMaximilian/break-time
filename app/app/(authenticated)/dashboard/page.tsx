@@ -124,6 +124,20 @@ export default function DashboardPage() {
               Create
             </Link>
           </header>
+          {!pinatasLoading && pinatas.length <= 0 && (
+            <div className="py-4 text-center">
+              <div className="text-xl font-bold">No Pinatas Yet! </div>
+              <p>
+                It looks like you haven't started creating any Pinatas yet.
+                Start building your own digital time capsule to capture
+                memories, moments, and meaningful contributions. Whether it's
+                photos, notes, or special files, you can save them all for
+                future discovery. Invite friends to contribute, and unlock your
+                Pinatas together when you're ready to take a trip down memory
+                lane!
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {pinatasLoading
               ? Array.from({ length: 5 }).map((_, i) => (

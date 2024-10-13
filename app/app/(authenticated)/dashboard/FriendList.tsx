@@ -37,10 +37,11 @@ export default function FriendList({
         setFriends(friends);
       }
     })();
-  }, []);
+  }, [currentUser?.profile]);
 
   const handleNextPage = async () => {
     if (currentUser?.profile) {
+      if (currentUser.profile.friendIds.length <= PAGE_LIMIT) return;
       const lastId = friends[friends.length - 1].$id;
 
       const nextPageRes = await databases.listDocuments(
