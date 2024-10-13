@@ -31,6 +31,7 @@ import { unsubscribe } from "diagnostics_channel";
 import { truncateString, uniqueArray } from "@/utils/common";
 import { FaUser } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -38,6 +39,7 @@ export default function PinataPage({
   params: { id: string };
 }) {
   const { currentUser } = useUser();
+  const router = useRouter();
   const [pinata, setPinata] = useState<Pinata | null>(null);
   const [thumbnailURL, setThumbnailURL] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -165,52 +167,61 @@ export default function PinataPage({
 
   useEffect(() => {
     (async () => {
-      setContributionsLoading(true);
-      setContributorsLoading(true);
-      const pinata = (await databases.getDocument(
-        config.dbId,
-        config.pinataCollectionId,
-        pinataId
-      )) as Pinata;
-
-      if (pinata.thumbnailCid) {
-        const res = (await getFileUrl(pinata.thumbnailCid)) as string;
-        setThumbnailURL(res);
-      }
-
-      setPinata(pinata);
-
-      const contributions = (
-        await databases.listDocuments(
+      try {
+        setContributionsLoading(true);
+        setContributorsLoading(true);
+        const pinata = (await databases.getDocument(
           config.dbId,
-          config.contributionCollectionId,
-          [Query.equal("pinataId", pinataId), Query.limit(100)]
-        )
-      ).documents as Contribution[];
-      setContributionsLoading(false);
-      setContributions(contributions);
+          config.pinataCollectionId,
+          pinataId
+        )) as Pinata;
 
-      if (
-        pinata.allowedContributorIds.length + pinata.allowedOpenerIds.length >
-        0
-      ) {
-        const contributors = (
+        if (pinata.thumbnailCid) {
+          const res = (await getFileUrl(pinata.thumbnailCid)) as string;
+          setThumbnailURL(res);
+        }
+
+        setPinata(pinata);
+
+        const contributions = (
           await databases.listDocuments(
             config.dbId,
-            config.userProfileCollectionId,
-            [
-              Query.equal("$id", [
-                ...pinata.allowedContributorIds,
-                ...pinata.allowedOpenerIds,
-              ]),
-              Query.limit(100),
-            ]
+            config.contributionCollectionId,
+            [Query.equal("pinataId", pinataId), Query.limit(100)]
           )
-        ).documents as UserProfile[];
+        ).documents as Contribution[];
+        setContributionsLoading(false);
+        setContributions(contributions);
 
-        setContributors(contributors);
+        if (
+          pinata.allowedContributorIds.length + pinata.allowedOpenerIds.length >
+          0
+        ) {
+          const contributors = (
+            await databases.listDocuments(
+              config.dbId,
+              config.userProfileCollectionId,
+              [
+                Query.equal("$id", [
+                  ...pinata.allowedContributorIds,
+                  ...pinata.allowedOpenerIds,
+                ]),
+                Query.limit(100),
+              ]
+            )
+          ).documents as UserProfile[];
+
+          setContributors(contributors);
+        }
+        setContributorsLoading(false);
+      } catch (error) {
+        router.push("/app/dashboard");
+        toast({
+          title: "Pinata Not Found",
+          description: "There isn't any Pinata with that ID",
+          variant: "destructive",
+        });
       }
-      setContributorsLoading(false);
     })();
   }, [pinataId]);
 
