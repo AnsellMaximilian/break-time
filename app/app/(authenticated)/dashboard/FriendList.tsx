@@ -8,7 +8,7 @@ import { UserProfile } from "@/types";
 import { Query } from "appwrite";
 import React, { useEffect, useState } from "react";
 
-const PAGE_LIMIT = 1;
+const PAGE_LIMIT = 5;
 
 export default function FriendList({
   friends,

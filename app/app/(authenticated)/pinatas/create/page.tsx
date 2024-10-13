@@ -131,6 +131,19 @@ export default function CreatePinataPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!currentUser?.profile) return;
+
+    if (
+      (doesOpenAutomatically || allowedOpenerIds.length <= 0) &&
+      !minimumOpenTime
+    ) {
+      toast({
+        variant: "destructive",
+        title: "Failed to create Pinata",
+        description:
+          "You must either set an Open Time or select at least one Allowed Opener",
+      });
+      return;
+    }
     try {
       setisLoading(true);
 
@@ -222,8 +235,9 @@ export default function CreatePinataPage() {
                           <Input placeholder="Pinata Title" {...field} />
                         </FormControl>
                         <FormDescription className="text-gray-800">
-                          The name of your Pinata, e.g., "Anniversary",
-                          "Birthday", "2024 Time Capsule"
+                          The name of your Pinata, e.g.,
+                          &quot;Anniversary&quot;, &quot;Birthday&quot;,
+                          &quot;2024 Time Capsule&quot;
                         </FormDescription>
 
                         <FormMessage />
@@ -243,9 +257,9 @@ export default function CreatePinataPage() {
                           />
                         </FormControl>
                         <FormDescription className="text-gray-800">
-                          Further information on your Pinata, e.g., "The
+                          Further information on your Pinata, e.g., &quot;The
                           contents of this Pinata represent the celebration of
-                          John and Mary's 17th Anniversary"
+                          John and Mary&apos;s 17th Anniversary&quot;
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -529,9 +543,9 @@ export default function CreatePinataPage() {
                         <FormDescription className="text-gray-200 mt-2">
                           List the individuals who are required to authorize the
                           opening of the time capsule. Each person must press
-                          the 'Open' button to unlock and reveal the contents.
-                          All listed individuals must approve before the capsule
-                          can be opened.
+                          the &apos;Open&apos; button to unlock and reveal the
+                          contents. All listed individuals must approve before
+                          the capsule can be opened.
                         </FormDescription>
                       </div>
                     )}
