@@ -65,7 +65,6 @@ export default function Page() {
           config.userProfileCollectionId,
           currentUser.$id,
           {
-            username: values.username,
             name: values.name,
             bio: values.bio,
           }
@@ -113,7 +112,7 @@ export default function Page() {
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your username" {...field} />
+                    <Input placeholder="Your username" {...field} disabled />
                   </FormControl>
                   <FormDescription>
                     This is your public display name.
@@ -145,7 +144,7 @@ export default function Page() {
                   <FormControl>
                     <Textarea
                       placeholder="Tell us a little bit about yourself"
-                      className="resize-none"
+                      className="resize-none text-black"
                       {...field}
                     />
                   </FormControl>
@@ -155,7 +154,7 @@ export default function Page() {
               )}
             />
             <Button type="submit" disabled={isLoading}>
-              Submit
+              Update
             </Button>
           </form>
         </Form>
