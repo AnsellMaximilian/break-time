@@ -18,7 +18,11 @@ import loadingLogo from "@/assets/breaktime-logo.svg";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { isUserAllowedToContribute } from "@/utils/pinatas";
+import {
+  doesPinataAcceptContributions,
+  getContributionTimeNode,
+  isUserAllowedToContribute,
+} from "@/utils/pinatas";
 import { useUser } from "@/contexts/user/UserContext";
 
 export default function PinataPage({
@@ -43,6 +47,15 @@ export default function PinataPage({
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!pinata || !currentUser) return;
+
+    if (!doesPinataAcceptContributions(pinata)) {
+      toast({
+        variant: "destructive",
+        description: "This Pinata is currently not accepting contrubitons.",
+        title: "Contribution Failed",
+      });
+      return;
+    }
 
     if (!isUserAllowedToContribute(pinata, currentUser)) {
       toast({
@@ -177,7 +190,16 @@ export default function PinataPage({
           </div>
           <div className="col-span-12 bg-[#6D3AC6] p-4 space-y-4">
             <div className="flex justify-between gap-4">
-              <h2 className="text-xl font-semibold">Files and Contributions</h2>
+              <div>
+                <h2 className="text-xl font-semibold">
+                  Files and Contributions
+                </h2>
+                <div className="text-sm">
+                  {getContributionTimeNode(pinata)}
+                  {!doesPinataAcceptContributions(pinata) &&
+                    `. This Pinata is currently not accepting contrubitons.`}
+                </div>
+              </div>
               <Button
                 disabled={!isUserAllowedToContribute(pinata, currentUser)}
                 onClick={() => fileInputRef.current?.click()}

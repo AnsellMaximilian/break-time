@@ -7,6 +7,7 @@ export function createErrorResponse(message: string): Response {
     data: null,
     success: false,
     message: message,
+    note: message,
   };
 
   return Response.json(res);
@@ -20,6 +21,7 @@ export function createSuccessResponse<T>(
     data,
     success: true,
     message,
+    note: message,
   };
 
   return Response.json(res);
@@ -71,4 +73,11 @@ export function truncateString(str: string, maxLength: number = 25): string {
     return str;
   }
   return str.slice(0, maxLength - 3) + "...";
+}
+
+export function hasDatePassed(dateString: string): boolean {
+  const dateToTest = new Date(dateString);
+  const today = new Date();
+
+  return today > dateToTest;
 }

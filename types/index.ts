@@ -38,7 +38,8 @@ export type Pinata = Models.Document & {
   allowedContributorIds: string[];
   allowedOpenerIds: string[];
   openerIds: string[];
-  isPublic: boolean;
+  isViewPublic: boolean;
+  isContributionPublic: boolean;
   thumbnailCid?: string;
 };
 
