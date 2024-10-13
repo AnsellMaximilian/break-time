@@ -81,3 +81,7 @@ export function hasDatePassed(dateString: string): boolean {
 
   return today > dateToTest;
 }
+
+export const uniqueArray = (arr: any[]) => {
+  return Array.from(new Set(arr));
+};

@@ -22,7 +22,11 @@ const renderer: CountdownRendererFn = ({
   completed,
 }) => {
   if (completed) {
-    return <span>Time's up!</span>;
+    return (
+      <div className="text-xl p-4 bg-primary text-primary-foreground uppercase font-bold rounded-md">
+        Pinata is Openable!
+      </div>
+    );
   } else {
     return (
       <div className="flex gap-2">

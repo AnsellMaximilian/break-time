@@ -1,7 +1,7 @@
 "use client";
 
 import UploadDialog from "@/components/UploadDialog";
-import { config, databases } from "@/lib/appwrite";
+import { client, config, databases } from "@/lib/appwrite";
 import { Contribution, Pinata } from "@/types";
 import { Upload, UploadCloud } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -19,11 +19,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
+  canPinataBeOpened,
   doesPinataAcceptContributions,
   getContributionTimeNode,
+  getTotalOpeners,
   isUserAllowedToContribute,
+  isUserAllowedToOpen,
 } from "@/utils/pinatas";
 import { useUser } from "@/contexts/user/UserContext";
+import { unsubscribe } from "diagnostics_channel";
+import { uniqueArray } from "@/utils/common";
 
 export default function PinataPage({
   params: { id: pinataId },
@@ -38,6 +43,8 @@ export default function PinataPage({
   const [currentUploadProgress, setCurrentUploadProgress] = useState(0);
   const [uploadMessage, setUploadMessage] = useState("");
 
+  const [isOpeningPinata, setIsOpeningPinata] = useState(false);
+
   const [contributionsLoading, setContributionsLoading] = useState(false);
   const [contributions, setContributions] = useState<Contribution[]>([]);
 
@@ -45,65 +52,105 @@ export default function PinataPage({
 
   const { toast } = useToast();
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (!pinata || !currentUser) return;
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (!pinata || !currentUser) return;
 
-    if (!doesPinataAcceptContributions(pinata)) {
-      toast({
-        variant: "destructive",
-        description: "This Pinata is currently not accepting contrubitons.",
-        title: "Contribution Failed",
-      });
-      return;
-    }
+      if (!doesPinataAcceptContributions(pinata)) {
+        toast({
+          variant: "destructive",
+          description: "This Pinata is currently not accepting contrubitons.",
+          title: "Contribution Failed",
+        });
+        return;
+      }
 
-    if (!isUserAllowedToContribute(pinata, currentUser)) {
-      toast({
-        variant: "destructive",
-        description: "You are not allowed to contribute to this Pinata.",
-        title: "Contribution Failed",
-      });
-      return;
-    }
-    try {
-      setUploadDialogOpen(true);
-      setCurrentUploadProgress(0);
-      setMaxUploadProgress(acceptedFiles.length * 3);
-      const uploadRes = await Promise.all(
-        acceptedFiles.map(async (file) => {
-          const keyRequest = await fetch("/api/key");
-          setUploadMessage(`Received key for ${file.name}`);
+      if (!isUserAllowedToContribute(pinata, currentUser)) {
+        toast({
+          variant: "destructive",
+          description: "You are not allowed to contribute to this Pinata.",
+          title: "Contribution Failed",
+        });
+        return;
+      }
+      try {
+        setUploadDialogOpen(true);
+        setCurrentUploadProgress(0);
+        setMaxUploadProgress(acceptedFiles.length * 3);
+        const uploadRes = await Promise.all(
+          acceptedFiles.map(async (file) => {
+            const keyRequest = await fetch("/api/key");
+            setUploadMessage(`Received key for ${file.name}`);
 
-          setCurrentUploadProgress((prev) => prev + 1);
-          const keyData = await keyRequest.json();
-          const upload = await pnt.upload.file(file).key(keyData.JWT);
-          setUploadMessage(`Uploaded file ${file.name}`);
-          setCurrentUploadProgress((prev) => prev + 1);
+            setCurrentUploadProgress((prev) => prev + 1);
+            const keyData = await keyRequest.json();
+            const upload = await pnt.upload.file(file).key(keyData.JWT);
+            setUploadMessage(`Uploaded file ${file.name}`);
+            setCurrentUploadProgress((prev) => prev + 1);
 
-          const metadata = (await databases.createDocument(
-            config.dbId,
-            config.contributionCollectionId,
-            ID.unique(),
-            {
-              pinataId,
-              cid: upload.cid,
-              fileType: file.type,
-              title: file.name,
-            }
-          )) as Contribution;
-          setUploadMessage(`Uploaded metadata for ${file.name}`);
+            const metadata = (await databases.createDocument(
+              config.dbId,
+              config.contributionCollectionId,
+              ID.unique(),
+              {
+                pinataId,
+                cid: upload.cid,
+                fileType: file.type,
+                title: file.name,
+                userId: currentUser.$id,
+              }
+            )) as Contribution;
+            setUploadMessage(`Uploaded metadata for ${file.name}`);
 
-          setCurrentUploadProgress((prev) => prev + 1);
+            setCurrentUploadProgress((prev) => prev + 1);
 
-          return metadata;
-        })
-      );
-      setContributions((prev) => [...prev, ...uploadRes]);
-    } catch (error) {
-    } finally {
-      setUploadDialogOpen(false);
-    }
+            return metadata;
+          })
+        );
+        setContributions((prev) => [...prev, ...uploadRes]);
+      } catch (error) {
+      } finally {
+        setUploadDialogOpen(false);
+      }
+    },
+    [pinata, currentUser]
+  );
+
+  // realtime
+  useEffect(() => {
+    const unsubscribe = client.subscribe(
+      [
+        `databases.${config.dbId}.collections.${config.pinataCollectionId}.documents.${pinataId}`,
+      ],
+      (response) => {
+        setPinata(response.payload as Pinata);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
+
+  const handleOpenPinata = async () => {
+    if (pinata && canPinataBeOpened(pinata) && currentUser) {
+      try {
+        setIsOpeningPinata(true);
+
+        await databases.updateDocument(
+          config.dbId,
+          config.pinataCollectionId,
+          pinataId,
+          {
+            openerIds: [...pinata.openerIds, currentUser.$id],
+          }
+        );
+      } catch (error) {
+      } finally {
+        setIsOpeningPinata(false);
+      }
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
@@ -179,8 +226,29 @@ export default function PinataPage({
             )}
 
             <div className="mt-auto flex items-center">
-              <div>0/3</div>
-              <button className="w-24 h-24 shadow-md rounded-full bg-[#FD8900] text-white font-bold uppercase ml-auto text-xl hover:opacity-90">
+              <div>
+                <div className="">
+                  <span className="font-bold text-xl">
+                    {getTotalOpeners(pinata)}/
+                    {uniqueArray(pinata.allowedOpenerIds).length}
+                  </span>{" "}
+                  <span>Opened</span>
+                </div>
+                <div className="text-xs uppercase font-semibold bg-white px-2">
+                  {currentUser && pinata.openerIds.includes(currentUser.$id)
+                    ? "Waiting for others"
+                    : "Click to Open"}
+                </div>
+              </div>
+              <button
+                onClick={handleOpenPinata}
+                disabled={
+                  !canPinataBeOpened(pinata) ||
+                  !isUserAllowedToOpen(pinata, currentUser) ||
+                  isOpeningPinata
+                }
+                className="disabled:opacity-70 disabled:cursor-not-allowed w-24 h-24 shadow-md rounded-full bg-[#FD8900] text-white font-bold uppercase ml-auto text-xl hover:opacity-90"
+              >
                 Open
               </button>
             </div>

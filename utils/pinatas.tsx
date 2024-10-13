@@ -12,6 +12,21 @@ export const isUserAllowedToContribute = (
   );
 };
 
+export const isUserAllowedToOpen = (pinata: Pinata, user: User | null) => {
+  return (
+    user &&
+    pinata.allowedOpenerIds.includes(user.$id) &&
+    !pinata.openerIds.includes(user.$id)
+  );
+};
+
+export const canPinataBeOpened = (pinata: Pinata) => {
+  return (
+    !!!pinata.minimumOpenTime ||
+    (!!pinata.minimumOpenTime && hasDatePassed(pinata.minimumOpenTime))
+  );
+};
+
 export const doesPinataAcceptContributions = (pinata: Pinata) => {
   if (pinata.contributeStart && !hasDatePassed(pinata.contributeStart))
     return false;
@@ -51,4 +66,12 @@ export const getContributionTimeNode = (pinata: Pinata) => {
       )}
     </span>
   );
+};
+
+export const getTotalOpeners = (pinata: Pinata) => {
+  const openers = pinata.openerIds.filter((op) =>
+    pinata.allowedOpenerIds.includes(op)
+  );
+
+  return openers.length;
 };
