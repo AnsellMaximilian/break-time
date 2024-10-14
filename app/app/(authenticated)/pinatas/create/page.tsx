@@ -272,7 +272,7 @@ export default function CreatePinataPage() {
                   <FormLabel>Thumbnail</FormLabel>
                   <div className="flex flex-col gap-4">
                     <Image
-                      className="w-64 h-64 border-border border-4 rounded-md"
+                      className="w-64 h-64 border-border border-4 rounded-md object-cover"
                       width={500}
                       height={500}
                       alt="thumbnail"
