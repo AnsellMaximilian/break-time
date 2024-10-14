@@ -69,7 +69,7 @@ export default function OpenPinata({ pinata }: { pinata: Pinata }) {
           width={250}
           height={250}
           alt="Pinata Thumbnail"
-          className="rounded-full border-white border-8"
+          className="rounded-full border-white border-8 w-56 h-56 object-cover"
         />
         <div>
           <h1 className="text-3xl font-bold">{pinata.title}</h1>
