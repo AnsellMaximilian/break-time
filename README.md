@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# [The Pinata Challenge](https://dev.to/challenges/pinata)
 
-## Getting Started
+## Quick Links
+- [Live App](https://pinata-breaktime.vercel.app/)
+- [Github Repo](https://github.com/AnsellMaximilian/break-time)
+- [Pinata](https://pinata.cloud/)
 
-First, run the development server:
+## What I Built
+*Break Time* is a web app for creating **digital time capsules** (called Pinatas) to store and cherish memories. Pinatas are opened on a future date to relive those memories, making sure your digital footprints remain meaningful.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Example Usage
+You can create a Pinata named **"John and Jill’s 5th Anniversary"**, where friends store messages, photos, or videos leading up to their 5th anniversary. Only John and Jill can open it after five years, unlocking all the memories inside.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app allows contributors to add memories, with customizable settings for contribution timelines and who can open the Pinata.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo
+[Demo Video on YouTube](https://youtu.be/Uad3h0LjhaE)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Screenshots
+#### Home Page
+![Home](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/yeiekkho30w5l204lxq6.png)
 
-## Learn More
+#### Dashboard
+![Dashboard](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/6obs4tjzdk2as92yt893.png)
 
-To learn more about Next.js, take a look at the following resources:
+#### Create Pinata
+![Create Pinata](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/jd1jx2ori8y0f4d4db9p.png)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
+- **Next.js** for frontend and secure route handlers
+- **Appwrite** for authentication and metadata storage
+- **Pinata** for file storage on IPFS
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Example Code for Route Handlers
+```typescript
+export async function GET() {
+  const keyData = await pinata.keys.create({
+    keyName: crypto.randomUUID().toString(),
+    permissions: { endpoints: { pinning: { pinFileToIPFS: true } } },
+    maxUses: 1,
+  });
+  return NextResponse.json(keyData);
+}
