@@ -464,7 +464,7 @@ export default function PinataPage({
                 <input
                   {...getInputProps()}
                   ref={fileInputRef}
-                  accept={openableFileTypes.join(", ")}
+                  // accept={openableFileTypes.join(", ")}
                 />
               </div>
             </div>
